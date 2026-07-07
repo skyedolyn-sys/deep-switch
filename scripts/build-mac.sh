@@ -13,7 +13,7 @@ APP="dist/mac-arm64/Deep Switch.app"
 echo ">>> [1/4] Building..."
 npm run build
 
-# 2. electron-builder packages .app
+# 2. electron-builder packages .app (no Developer ID — ad-hoc only)
 echo ">>> [2/4] Packaging .app..."
 rm -rf dist/mac-arm64
 npx electron-builder --mac --dir --publish never
@@ -23,21 +23,20 @@ if [[ ! -d "$APP" ]]; then
   exit 1
 fi
 
-# 3. Re-sign everything inside the .app with hardened runtime + entitlements
-echo ">>> [3/4] Re-signing (hardened runtime + entitlements)..."
+# 3. Re-sign with hardened runtime + entitlements
+echo ">>> [3/4] Re-signing (hardened runtime + entitlements)…"
 bash scripts/sign-mac.sh "$APP"
 
 # 4. Build the DMG and zip from the signed .app
-echo ">>> [4/4] Packaging DMG + zip..."
+echo ">>> [4/4] Packaging DMG + zip…"
 
-# Make a clean staging folder so the DMG contents are tidy
 STAGE=$(mktemp -d)
 mkdir -p "$STAGE/Deep Switch"
 cp -R "$APP" "$STAGE/Deep Switch/"
 ln -s /Applications "$STAGE/Deep Switch/Applications"
 
-DMG_PATH="dist/Deep Switch-${VERSION}-arm64.dmg"
-ZIP_PATH="dist/Deep Switch-${VERSION}-arm64-mac.zip"
+DMG_PATH="dist/Deep Switch-${VERSION}-arm64-resigned.dmg"
+ZIP_PATH="dist/Deep Switch-${VERSION}-arm64-resigned-mac.zip"
 
 rm -f "$DMG_PATH" "$ZIP_PATH"
 hdiutil create -volname "Deep Switch" \
@@ -50,7 +49,7 @@ rm -rf "$STAGE"
 
 echo ""
 echo ">>> Built:"
-ls -la "$DMG_PATH" "$ZIP_PATH"
+ls -lh "$DMG_PATH" "$ZIP_PATH"
 echo ""
 echo "To verify signature inside the DMG:"
 echo "  hdiutil attach '$DMG_PATH'"

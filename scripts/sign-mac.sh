@@ -1,10 +1,16 @@
 #!/bin/bash
 # Deep Switch — post-build ad-hoc code signing
 #
-# Re-signs every Mach-O binary inside the .app bundle with hardened
-# runtime and our entitlements. This is required because ad-hoc builds
-# without proper signing cause Gatekeeper rejection + occasional
-# crashes on macOS Sonoma/Sequoia.
+# Ad-hoc signs the entire .app bundle for users running unsigned
+# downloads. Uses --deep to walk into nested .app bundles and frameworks
+# so sealed resources match what Gatekeeper expects.
+#
+# This is **not** a replacement for a real Developer ID — ad-hoc signed
+# apps still trigger the "Deep Switch is damaged" prompt on first launch
+# unless the user runs:
+#   sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"
+# But once cleared, the binary runs cleanly (no crash from missing
+# hardened runtime entitlements).
 #
 # Run after `electron-builder` and before packaging the DMG.
 
@@ -16,7 +22,8 @@ if [[ $# -lt 1 ]]; then
 fi
 
 APP="$1"
-ENTITLEMENTS="$(dirname "$0")/../build/entitlements.mac.plist"
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+ENTITLEMENTS="$HERE/build/entitlements.mac.plist"
 
 if [[ ! -d "$APP" ]]; then
   echo "Error: $APP is not a directory" >&2
@@ -28,37 +35,30 @@ if [[ ! -f "$ENTITLEMENTS" ]]; then
   exit 1
 fi
 
-# Find every Mach-O and helper app that needs signing
-BINARIES=()
-while IFS= read -r -d '' f; do
-  BINARIES+=("$f")
-done < <(find "$APP" -type f \( -name "*.node" -o -name "*.dylib" \) -print0)
+# ─── Strip empty .lproj dirs that ship with Electron ───────────────
+EMPTY_LPROJ=$(find "$APP/Contents/Resources/" -mindepth 1 -maxdepth 1 -type d -empty 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$EMPTY_LPROJ" -gt 0 ]]; then
+  find "$APP/Contents/Resources/" -mindepth 1 -maxdepth 1 -type d -empty -delete
+  echo "  removed $EMPTY_LPROJ empty .lproj dirs"
+fi
 
-EXES=()
-while IFS= read -r -d '' f; do
-  EXES+=("$f")
-done < <(find "$APP" -type f -perm +111 -print0)
+# ─── Strip any prior signatures ─────────────────────────────────────
+find "$APP" -name "_CodeSignature" -type d -exec rm -rf {} + 2>/dev/null || true
+codesign --remove-signature --deep "$APP" 2>/dev/null || true
 
-HELPERS=()
-while IFS= read -r -d '' f; do
-  HELPERS+=("$f")
-done < <(find "$APP" -name "*.app" -print0)
+# ─── Sign with --deep (walks into nested bundles) ───────────────────
+echo "Signing $APP (ad-hoc + hardened runtime + entitlements)…"
+codesign --force --deep --sign - \
+  --options runtime \
+  --entitlements "$ENTITLEMENTS" \
+  --timestamp=none \
+  "$APP"
 
-echo "Found:"
-echo "  ${#BINARIES[@]} dylibs / .node"
-echo "  ${#EXES[@]} executables"
-echo "  ${#HELPERS[@]} helper apps"
+# ─── Verify ─────────────────────────────────────────────────────────
+echo ""
+echo "Signature verification:"
+codesign -dvv "$APP" 2>&1 | sed 's/^/  /'
 
-# Sign in reverse order (deepest first): dylibs/nodes → helpers → main app
-SIGN_FLAGS=(--force --sign - --options runtime --entitlements "$ENTITLEMENTS" --timestamp=none)
-
-for f in "${BINARIES[@]}"; do
-  codesign "${SIGN_FLAGS[@]}" "$f"
-done
-for f in "${HELPERS[@]}"; do
-  codesign "${SIGN_FLAGS[@]}" "$f"
-done
-codesign "${SIGN_FLAGS[@]}" "$APP"
-
-echo "Signed: $APP"
-codesign -dvv "$APP" | head -8
+echo ""
+echo "spctl assessment (expected: 'rejected' for ad-hoc, since no Developer ID):"
+spctl -a -vv -t install "$APP" 2>&1 | sed 's/^/  /' || true
