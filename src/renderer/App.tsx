@@ -26,8 +26,13 @@ export interface ProviderPreset {
   thinkingEnabled: boolean;
   reasoningEffort: 'high' | 'max';
   description: string;
+  descriptionEn: string;
   hint?: string;
+  hintEn?: string;
   platform: string;
+  platformEn: string;
+  cardSuffix?: string;
+  cardSuffixEn?: string;
 }
 
 export default function App() {

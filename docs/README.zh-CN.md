@@ -4,6 +4,20 @@
 
 ---
 
+## 下载 / Download
+
+**最新稳定版：** [v0.1.0](../../releases/latest)
+
+| 平台 | 下载 | 大小 |
+|---|---|---|
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| Linux / Windows | [源码编译](#开发) | — |
+
+> ⚠️ 构建**未签名**。首次从 DMG 启动可能需要右键 → *打开* 以绕过 Gatekeeper。
+
+---
+
 ## 语言 / Languages
 
 - [English](../README.md)

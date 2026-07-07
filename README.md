@@ -5,6 +5,20 @@
 
 ---
 
+## Download
+
+**Latest stable:** [v0.1.0](../../releases/latest)
+
+| Platform | Download | Size |
+|---|---|---|
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| Linux / Windows | [Build from source](#development) | — |
+
+> ⚠️ The build is **unsigned**. First launch from DMG may need right-click → *Open* to clear the Gatekeeper prompt.
+
+---
+
 ## Languages
 
 - [English](./README.md)
@@ -29,10 +43,10 @@
 **Provider switcher for Deep Code CLI — written for the way you actually work.**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)](#installation)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)](#download)
 [![Electron](https://img.shields.io/badge/electron-28-9feaf9)](https://www.electronjs.org)
 [![React](https://img.shields.io/badge/react-18-61dafb)](https://react.dev)
-[![Release](https://img.shields.io/github/v/release/skyedolyn-sys/deep-switch)](../../releases)
+[![Release](https://img.shields.io/github/v/release/skyedolyn-sys/deep-switch)](../../releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/skyedolyn-sys/deep-switch/ci.yml)](../../actions)
 
 </div>

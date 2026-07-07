@@ -4,6 +4,20 @@
 
 ---
 
+## 다운로드 / Download
+
+**최신 안정 버전:** [v0.1.0](../../releases/latest)
+
+| 플랫폼 | 다운로드 | 크기 |
+|---|---|---|
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| Linux / Windows | [소스에서 빌드](#개발) | — |
+
+> ⚠️ 빌드는 **서명되지 않았습니다**. DMG 에서 처음 실행할 때는 우클릭 → *열기* 로 Gatekeeper 를 통과해야 할 수 있습니다.
+
+---
+
 ## 언어 / Languages
 
 - [English](../README.md)

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProviderPreset } from '../App';
-import { presetDisplayName } from '../../main/presets';
 
 interface Props {
   onAdd: (preset: ProviderPreset, apiKey: string, extras?: { name: string; baseUrl: string; model: string }) => void;
   onClose: () => void;
+}
+
+function presetDisplayName(p: ProviderPreset): string {
+  return p.name + (p.cardSuffix ?? '');
 }
 
 export function PresetSelector({ onAdd, onClose }: Props) {
