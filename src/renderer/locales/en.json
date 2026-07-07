@@ -1,0 +1,171 @@
+{
+  "appName": "Deep Switch",
+  "version": "v0.1.0",
+
+  "sidebar": {
+    "addProvider": "+ Add Provider",
+    "deepCodeConfig": "Deep Code Config",
+    "active": "Active",
+    "noActive": "No active provider — enable one below",
+    "baseUrl": "BASE_URL",
+    "model": "MODEL",
+    "configPath": "Deep Code Config Path",
+    "configFound": "Found",
+    "configMissing": "Missing",
+    "createConfigFile": "Create Config File",
+    "detectCurrentConfig": "🔄 Detect Current Deep Code Config"
+  },
+
+  "providerList": {
+    "title": "Providers",
+    "hint": "Click Enable to switch Deep Code's API",
+    "empty": {
+      "title": "No providers yet",
+      "hint": "Click + Add Provider on the left"
+    }
+  },
+
+  "provider": {
+    "status": {
+      "untested": "Untested",
+      "testing": "Testing…",
+      "ok": "OK",
+      "error": "Error",
+      "active": "Active",
+      "max": "MAX",
+      "thinking": "Think"
+    },
+    "actions": {
+      "activate": "Enable",
+      "settings": "Settings",
+      "test": "Test",
+      "delete": "Delete",
+      "model": "Model"
+    },
+    "modelDropdown": {
+      "loading": "Loading models…",
+      "error": "❌ {{error}}",
+      "available": "{{count}} available models — click to switch",
+      "empty": "This provider returned no models",
+      "current": "Current"
+    },
+    "tooltips": {
+      "model": "Click to fetch/switch available models",
+      "apply": "Switch Deep Code to this provider",
+      "test": "Test connection",
+      "settings": "Settings",
+      "delete": "Delete",
+      "thinking": "Toggle reasoning chain mode",
+      "reasoning": "Reasoning depth (effective when thinking is on)"
+    }
+  },
+
+  "providerDetail": {
+    "back": "← Back to list",
+    "title": "{{name}}",
+    "save": "Save",
+    "section": {
+      "connection": "Connection",
+      "basicInfo": "Basic Info",
+      "apiKey": "API Key",
+      "modelParams": "Model Parameters",
+      "danger": "Danger Zone"
+    },
+    "fields": {
+      "name": "Name",
+      "baseUrl": "Base URL",
+      "apiKey": "Key",
+      "model": "Model",
+      "placeholder": {
+        "baseUrl": "https://api.deepseek.com",
+        "model": "deepseek-v4-pro",
+        "apiKeySaved": "•••••••• (saved)",
+        "apiKeyNew": "Enter new key"
+      }
+    },
+    "connection": {
+      "ok": "Connected",
+      "error": "Failed",
+      "testing": "Testing…",
+      "untested": "Not tested",
+      "latency": "{{ms}}ms",
+      "testButton": "🔍 Test Connection",
+      "testingButton": "⏳ Testing…"
+    },
+    "modelFetch": {
+      "button": "📋 Fetch Models",
+      "loading": "⏳ Loading…",
+      "error": "API Key missing — enter it above first",
+      "errorFetch": "Failed to fetch models"
+    },
+    "advanced": {
+      "thinkingMode": "Thinking Mode",
+      "thinkingDesc": "Enables reasoning chain for complex tasks",
+      "reasoning": "Reasoning",
+      "max": "max — deeper reasoning (more tokens)",
+      "high": "high — balanced (fewer tokens)"
+    },
+    "delete": {
+      "label": "Delete this provider",
+      "desc": "Cannot be undone",
+      "button": "Delete",
+      "confirm": "Delete \"{{name}}\"? This cannot be undone."
+    }
+  },
+
+  "presetSelector": {
+    "title": "Add Provider",
+    "subtitle": "Choose a preset and enter your API key",
+    "close": "✕",
+    "presetLabel": "OpenAI-compatible presets ({{count}})",
+    "customSection": "Custom Config",
+    "customPlaceholder": {
+      "name": "Display name (e.g. My private proxy)",
+      "baseUrl": "Base URL (e.g. https://llm.internal.company.com/v1)",
+      "model": "Model ID (e.g. gpt-4o, claude-3-5-sonnet, my-custom-model)"
+    },
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Paste {{vendor}} API Key",
+    "apiKeyHint": "Your API key is stored locally only",
+    "info": {
+      "baseUrl": "Base URL: <code>{{baseUrl}}</code>",
+      "model": "Model: <code>{{model}}</code>"
+    },
+    "cancel": "Cancel",
+    "add": "Add & Enable"
+  },
+
+  "settings": {
+    "title": "Preferences",
+    "language": "Language",
+    "systemDefault": "System Default",
+    "zh": "中文",
+    "en": "English"
+  },
+
+  "toast": {
+    "providerSwitched": "✓ {{name}} switched · {{baseUrl}} / {{model}}",
+    "modelUpdatedActive": "✓ {{name}} switched to {{model}}",
+    "modelUpdated": "✓ Model updated to {{model}}",
+    "thinkingEnabled": "✓ Thinking mode enabled",
+    "thinkingDisabled": "✓ Thinking mode disabled",
+    "effortSet": "✓ Reasoning effort set to {{effort}}",
+    "configDetected": "✓ Detected current Deep Code config and applied matching provider",
+    "configImported": "✓ Imported and applied from settings.json",
+    "configCreated": "✓ Deep Code config file created"
+  },
+
+  "dialog": {
+    "deleteProvider": "Delete this provider?",
+    "noConfigFound": "No complete config found in ~/.deepcode/settings.json"
+  },
+
+  "tray": {
+    "openMainWindow": "Open Main Window",
+    "openOfficialSite": "Open Official Website",
+    "noActiveProvider": "No active provider — select one in the main window",
+    "switchProvider": "Switch Provider",
+    "noProviders": "(No providers)",
+    "quit": "Quit"
+  }
+}

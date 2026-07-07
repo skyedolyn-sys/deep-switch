@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Provider } from '../App';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, testResult }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState(provider.name);
   const [baseUrl, setBaseUrl] = useState(provider.baseUrl);
   const [model, setModel] = useState(provider.model);
@@ -20,7 +22,6 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
   const [reasoningEffort, setReasoningEffort] = useState(provider.reasoningEffort);
   const [changed, setChanged] = useState(false);
 
-  // Model fetching
   const [models, setModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelError, setModelError] = useState('');
@@ -51,19 +52,15 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
   };
 
   const handleDelete = () => {
-    if (confirm(`Delete "${provider.name}"? This cannot be undone.`)) {
+    if (confirm(t('providerDetail.delete.confirm', { name: provider.name }))) {
       onDelete(provider.id);
     }
   };
 
-  // Fetch available models from the provider
   const handleFetchModels = async () => {
     setFetchingModels(true);
     setModelError('');
 
-    // Resolve the API key:
-    //   1. If the user typed a new key in this session, use it
-    //   2. Otherwise ask main process for the real (unmasked) key for this provider
     let key = apiKey;
     if (!key) {
       const full = await window.deepSwitch.getProvider(provider.id);
@@ -71,7 +68,7 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
     }
     if (!key) {
       setFetchingModels(false);
-      setModelError('缺少 API Key — 请先在上方 Key 框输入');
+      setModelError(t('providerDetail.modelFetch.error'));
       return;
     }
 
@@ -81,13 +78,16 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
     if (result.ok) {
       setModels(result.models);
     } else {
-      setModelError(result.error || 'Failed to fetch models');
+      setModelError(result.error || t('providerDetail.modelFetch.errorFetch'));
     }
   };
 
-  const statusLabel = testResult?.status === 'ok' ? 'Connected' :
-    testResult?.status === 'error' ? 'Failed' :
-    testResult?.status === 'testing' ? 'Testing...' : 'Not tested';
+  const statusMap: Record<string, string> = {
+    ok: t('providerDetail.connection.ok'),
+    error: t('providerDetail.connection.error'),
+    testing: t('providerDetail.connection.testing'),
+  };
+  const statusLabel = statusMap[testResult?.status ?? ''] || t('providerDetail.connection.untested');
 
   const statusClass = testResult?.status === 'ok' ? 'status-ok' :
     testResult?.status === 'error' ? 'status-err' :
@@ -96,44 +96,46 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
   return (
     <div className="detail-page">
       <div className="detail-nav">
-        <button className="nav-back" onClick={onBack}><span className="nav-arrow">←</span> Back</button>
-        <span className="nav-title">{provider.name}</span>
+        <button className="nav-back" onClick={onBack}><span className="nav-arrow">←</span> {t('providerDetail.back')}</button>
+        <span className="nav-title">{t('providerDetail.title', { name: provider.name })}</span>
         <button className={`btn btn-primary ${changed ? '' : 'dimmed'}`} onClick={handleSave} disabled={!changed}>
-          Save
+          {t('providerDetail.save')}
         </button>
       </div>
 
       <div className="detail-body">
-        {/* Connection Status */}
         <section className="detail-section">
-          <div className="section-label">Connection</div>
+          <div className="section-label">{t('providerDetail.section.connection')}</div>
           <div className="status-card">
             <div className={`status-badge ${statusClass}`}>
               <div className="status-dot-sm" />
               <span>{statusLabel}</span>
-              {testResult?.latencyMs ? <span className="latency">{testResult.latencyMs}ms</span> : null}
+              {testResult?.latencyMs ? <span className="latency">{t('providerDetail.connection.latency', { ms: testResult.latencyMs })}</span> : null}
             </div>
             {testResult?.error && <div className="status-error-msg">{testResult.error}</div>}
             <button className="btn btn-sm test-btn-detail" onClick={onTest} disabled={testResult?.status === 'testing'}>
-              {testResult?.status === 'testing' ? '⏳ Testing' : '🔍 Test Connection'}
+              {testResult?.status === 'testing' ? t('providerDetail.connection.testingButton') : t('providerDetail.connection.testButton')}
             </button>
           </div>
         </section>
 
-        {/* Basic Info */}
         <section className="detail-section">
-          <div className="section-label">Basic Info</div>
+          <div className="section-label">{t('providerDetail.section.basicInfo')}</div>
           <div className="form-card">
             <div className="form-row">
-              <label>Name</label>
+              <label>{t('providerDetail.fields.name')}</label>
               <input value={name} onChange={(e) => { setName(e.target.value); markChanged(); }} />
             </div>
             <div className="form-row">
-              <label>Base URL</label>
-              <input value={baseUrl} onChange={(e) => { setBaseUrl(e.target.value); markChanged(); setModels([]); setModelError(''); }} placeholder="https://api.deepseek.com" />
+              <label>{t('providerDetail.fields.baseUrl')}</label>
+              <input
+                value={baseUrl}
+                onChange={(e) => { setBaseUrl(e.target.value); markChanged(); setModels([]); setModelError(''); }}
+                placeholder={t('providerDetail.fields.placeholder.baseUrl')}
+              />
             </div>
             <div className="form-row">
-              <label>Model</label>
+              <label>{t('providerDetail.fields.model')}</label>
               {models.length > 0 ? (
                 <select value={model} onChange={(e) => { setModel(e.target.value); markChanged(); }}>
                   {models.map((m) => (
@@ -142,7 +144,12 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
                 </select>
               ) : (
                 <div style={{ flex: 1, display: 'flex', gap: 8 }}>
-                  <input value={model} onChange={(e) => { setModel(e.target.value); markChanged(); }} placeholder="deepseek-v4-pro" style={{ flex: 1 }} />
+                  <input
+                    value={model}
+                    onChange={(e) => { setModel(e.target.value); markChanged(); }}
+                    placeholder={t('providerDetail.fields.placeholder.model')}
+                    style={{ flex: 1 }}
+                  />
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -150,7 +157,7 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
                     disabled={fetchingModels}
                     style={{ whiteSpace: 'nowrap' }}
                   >
-                    {fetchingModels ? '⏳ Loading...' : '📋 Fetch Models'}
+                    {fetchingModels ? t('providerDetail.modelFetch.loading') : t('providerDetail.modelFetch.button')}
                   </button>
                 </div>
               )}
@@ -159,18 +166,17 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
           </div>
         </section>
 
-        {/* API Key */}
         <section className="detail-section">
-          <div className="section-label">API Key</div>
+          <div className="section-label">{t('providerDetail.section.apiKey')}</div>
           <div className="form-card">
             <div className="form-row">
-              <label>Key</label>
+              <label>{t('providerDetail.fields.apiKey')}</label>
               <div className="key-input-wrap">
                 <input
                   type={showKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => { setApiKey(e.target.value); markChanged(); setModels([]); setModelError(''); }}
-                  placeholder={provider.apiKey === '••••••••' ? '•••••••• (saved)' : 'Enter new key'}
+                  placeholder={provider.apiKey === '••••••••' ? t('providerDetail.fields.placeholder.apiKeySaved') : t('providerDetail.fields.placeholder.apiKeyNew')}
                 />
                 <button type="button" className="btn-eye" onClick={() => setShowKey(!showKey)}>
                   {showKey ? '🙈' : '👁'}
@@ -180,39 +186,37 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
           </div>
         </section>
 
-        {/* Model Parameters */}
         <section className="detail-section">
-          <div className="section-label">Model Parameters</div>
+          <div className="section-label">{t('providerDetail.section.modelParams')}</div>
           <div className="form-card">
             <div className="form-row switch-row">
               <div>
-                <label>Thinking Mode</label>
-                <p className="form-desc">Enables reasoning chain for complex tasks</p>
+                <label>{t('providerDetail.advanced.thinkingMode')}</label>
+                <p className="form-desc">{t('providerDetail.advanced.thinkingDesc')}</p>
               </div>
               <div className={`toggle ${thinkingEnabled ? 'on' : ''}`} onClick={() => { setThinkingEnabled(!thinkingEnabled); markChanged(); }} />
             </div>
             {thinkingEnabled && (
               <div className="form-row">
-                <label>Reasoning</label>
+                <label>{t('providerDetail.advanced.reasoning')}</label>
                 <select value={reasoningEffort} onChange={(e) => { setReasoningEffort(e.target.value as 'max' | 'high'); markChanged(); }}>
-                  <option value="max">Max — deeper reasoning (more tokens)</option>
-                  <option value="high">High — balanced (fewer tokens)</option>
+                  <option value="max">{t('providerDetail.advanced.max')}</option>
+                  <option value="high">{t('providerDetail.advanced.high')}</option>
                 </select>
               </div>
             )}
           </div>
         </section>
 
-        {/* Danger */}
         <section className="detail-section">
-          <div className="section-label danger-label">Danger Zone</div>
+          <div className="section-label danger-label">{t('providerDetail.section.danger')}</div>
           <div className="form-card danger-card">
             <div className="form-row danger-row">
               <div>
-                <label>Delete this provider</label>
-                <p className="form-desc">Cannot be undone</p>
+                <label>{t('providerDetail.delete.label')}</label>
+                <p className="form-desc">{t('providerDetail.delete.desc')}</p>
               </div>
-              <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+              <button className="btn btn-danger" onClick={handleDelete}>{t('providerDetail.delete.button')}</button>
             </div>
           </div>
         </section>

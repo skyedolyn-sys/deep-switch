@@ -85,6 +85,25 @@ body {
   padding: 4px 0;
 }
 
+.sidebar-setting-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sidebar-setting-key { font-size: 12px; color: var(--text-primary); }
+.sidebar-setting-select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.sidebar-setting-select:focus { outline: none; border-color: var(--accent); }
+
 .sidebar-env-card {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -122,6 +141,39 @@ body {
 }
 .sidebar-restore-btn { color: var(--yellow); }
 .sidebar-restore-btn:hover { color: var(--yellow); border-color: var(--yellow); }
+
+.sidebar-config-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sidebar-config-card-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.sidebar-config-card-title {
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+}
+.sidebar-config-card-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 6px;
+  border-radius: 10px;
+}
+.sidebar-config-card-badge.ok { background: var(--green-dim); color: var(--green); }
+.sidebar-config-card-badge.missing { background: var(--red-dim); color: var(--red); }
+.sidebar-config-card-path {
+  font-size: 11px; color: var(--text-secondary);
+  word-break: break-all; line-height: 1.4;
+}
+.sidebar-config-card-action {
+  align-self: flex-start;
+  padding: 6px 10px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+}
+.sidebar-config-card-action:hover { background: var(--accent-hover); }
 
 .sidebar-spacer { flex: 1; }
 .sidebar-foot {

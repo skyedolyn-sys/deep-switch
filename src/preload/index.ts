@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('deepSwitch', {
   setActiveProvider: (id: string): Promise<any> => ipcRenderer.invoke('providers:setActive', id),
   getActiveProvider: (): Promise<any> => ipcRenderer.invoke('providers:getActive'),
   applyProvider: (provider: any): Promise<any> => ipcRenderer.invoke('providers:apply', provider),
-  restoreBackup: (): Promise<boolean> => ipcRenderer.invoke('providers:restore'),
 
   // Presets
   listPresets: (): Promise<any[]> => ipcRenderer.invoke('presets:list'),
@@ -27,5 +26,9 @@ contextBridge.exposeInMainWorld('deepSwitch', {
   getSettings: (): Promise<any> => ipcRenderer.invoke('settings:get'),
   saveSettings: (settings: any): Promise<any> => ipcRenderer.invoke('settings:save', settings),
 
-  hasBackup: (): Promise<boolean> => ipcRenderer.invoke('backup:has'),
+  // Deep Code config path
+  getDeepCodeConfigPath: (): Promise<{ path: string; exists: boolean }> =>
+    ipcRenderer.invoke('deepcode:path'),
+  ensureDeepCodeConfig: (): Promise<{ path: string; exists: boolean }> =>
+    ipcRenderer.invoke('deepcode:ensureConfig'),
 });

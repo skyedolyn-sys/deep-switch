@@ -18,6 +18,8 @@ export interface ProviderConfig {
 
 export interface AppSettings {
   activeProviderId: string | null;
+  deepCodeConfigPath: string;
+  preferredLanguage: 'system' | 'zh' | 'en';
 }
 
 interface StoredData {
@@ -26,11 +28,12 @@ interface StoredData {
 }
 
 const STORE_PATH = path.join(os.homedir(), '.deep-switch', 'config.json');
-const DEEPCODE_CONFIG = path.join(os.homedir(), '.deepcode', 'settings.json');
-const DEEPCODE_BACKUP = path.join(os.homedir(), '.deepcode', 'settings.json.deepswitch.bak');
+const DEFAULT_DEEPCODE_CONFIG = path.join(os.homedir(), '.deepcode', 'settings.json');
 
 const DEFAULT_SETTINGS: AppSettings = {
   activeProviderId: null,
+  deepCodeConfigPath: DEFAULT_DEEPCODE_CONFIG,
+  preferredLanguage: 'system',
 };
 
 export class ProviderManager {
@@ -197,13 +200,35 @@ export class ProviderManager {
   // ─── Deep Code settings.json bridge ──────────────────────────────────────
 
   /**
-   * Back up the user's original ~/.deepcode/settings.json (once) before we
-   * first touch it. Subsequent activations reuse this backup.
+   * Resolves the active Deep Code settings.json path and ensures the parent
+   * directory exists. Defaults to ~/.deepcode/settings.json if the user has
+   * never configured a custom path.
    */
-  private ensureBackup(): void {
-    if (!fs.existsSync(DEEPCODE_CONFIG)) return;
-    if (fs.existsSync(DEEPCODE_BACKUP)) return;
-    fs.copyFileSync(DEEPCODE_CONFIG, DEEPCODE_BACKUP);
+  getDeepCodeConfigPath(): string {
+    const configured = this.data.settings.deepCodeConfigPath;
+    return configured && configured.length > 0 ? configured : DEFAULT_DEEPCODE_CONFIG;
+  }
+
+  /**
+   * Ensure the Deep Code config file exists. If it does not, create an empty
+   * settings.json so Deep Switch can write to it immediately.
+   */
+  ensureDeepCodeConfigExists(): void {
+    const configPath = this.getDeepCodeConfigPath();
+    if (fs.existsSync(configPath)) return;
+
+    const dir = path.dirname(configPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(configPath, JSON.stringify({ env: {} }, null, 2), 'utf-8');
+  }
+
+  /**
+   * True if the configured Deep Code settings.json exists.
+   */
+  hasDeepCodeConfig(): boolean {
+    return fs.existsSync(this.getDeepCodeConfigPath());
   }
 
   /**
@@ -213,8 +238,9 @@ export class ProviderManager {
    */
   readCurrentDeepCodeConfig(): ProviderConfig | null {
     try {
-      if (!fs.existsSync(DEEPCODE_CONFIG)) return null;
-      const config = JSON.parse(fs.readFileSync(DEEPCODE_CONFIG, 'utf-8'));
+      const configPath = this.getDeepCodeConfigPath();
+      if (!fs.existsSync(configPath)) return null;
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       const env = config.env || {};
       const baseUrl = env.BASE_URL || '';
       const apiKey = env.API_KEY || '';
@@ -239,18 +265,20 @@ export class ProviderManager {
 
   /**
    * Apply the given provider's credentials directly into Deep Code's
-   * settings.json. Deep Code reads this file on startup; no proxy required.
+   * settings.json. Deep Code reads this file on every query, so changes are
+   * effective immediately for new prompts.
    *
    * Side effect: also marks the provider as active in our store.
    * Returns the freshly-written settings.json content for confirmation.
    */
   applyToDeepCode(provider: ProviderConfig): { env: Record<string, string> } {
-    this.ensureBackup();
+    this.ensureDeepCodeConfigExists();
 
+    const configPath = this.getDeepCodeConfigPath();
     let existing: any = {};
-    if (fs.existsSync(DEEPCODE_CONFIG)) {
+    if (fs.existsSync(configPath)) {
       try {
-        existing = JSON.parse(fs.readFileSync(DEEPCODE_CONFIG, 'utf-8'));
+        existing = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       } catch {
         existing = {};
       }
@@ -269,29 +297,12 @@ export class ProviderManager {
       existing.reasoningEffort = provider.reasoningEffort;
     }
 
-    const dir = path.dirname(DEEPCODE_CONFIG);
+    const dir = path.dirname(configPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(DEEPCODE_CONFIG, JSON.stringify(existing, null, 2), 'utf-8');
+    fs.writeFileSync(configPath, JSON.stringify(existing, null, 2), 'utf-8');
 
     this.setActiveProvider(provider.id);
 
     return { env: existing.env };
-  }
-
-  /**
-   * Restore Deep Code settings.json from the first-time backup. No-op if no
-   * backup exists (i.e. user never ran Deep Switch on a non-trivial config).
-   */
-  restoreFromBackup(): boolean {
-    if (!fs.existsSync(DEEPCODE_BACKUP)) return false;
-    fs.copyFileSync(DEEPCODE_BACKUP, DEEPCODE_CONFIG);
-    fs.unlinkSync(DEEPCODE_BACKUP);
-    this.data.settings.activeProviderId = null;
-    this.save();
-    return true;
-  }
-
-  hasBackup(): boolean {
-    return fs.existsSync(DEEPCODE_BACKUP);
   }
 }

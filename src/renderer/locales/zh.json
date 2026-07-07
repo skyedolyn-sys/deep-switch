@@ -1,0 +1,171 @@
+{
+  "appName": "Deep Switch",
+  "version": "v0.1.0",
+
+  "sidebar": {
+    "addProvider": "+ 添加供应商",
+    "deepCodeConfig": "Deep Code 配置",
+    "active": "激活",
+    "noActive": "未激活 — 点下方任一 provider 的「启用」按钮",
+    "baseUrl": "BASE_URL",
+    "model": "MODEL",
+    "configPath": "Deep Code 配置路径",
+    "configFound": "已找到",
+    "configMissing": "未创建",
+    "createConfigFile": "创建配置文件",
+    "detectCurrentConfig": "🔄 检测 Deep Code 当前配置"
+  },
+
+  "providerList": {
+    "title": "供应商",
+    "hint": "点「启用」直接切换 Deep Code 的 API",
+    "empty": {
+      "title": "还没有供应商",
+      "hint": "点左侧 + 添加供应商"
+    }
+  },
+
+  "provider": {
+    "status": {
+      "untested": "未测试",
+      "testing": "测试中…",
+      "ok": "正常",
+      "error": "异常",
+      "active": "已激活",
+      "max": "MAX",
+      "thinking": "思考"
+    },
+    "actions": {
+      "activate": "启用",
+      "settings": "设置",
+      "test": "测试",
+      "delete": "删除",
+      "model": "模型"
+    },
+    "modelDropdown": {
+      "loading": "加载模型列表…",
+      "error": "❌ {{error}}",
+      "available": "{{count}} 个可用模型 — 点选切换",
+      "empty": "该 provider 未返回任何模型",
+      "current": "当前"
+    },
+    "tooltips": {
+      "model": "点击获取/切换可用模型",
+      "apply": "切换 Deep Code 到这个 provider",
+      "test": "测试连接",
+      "settings": "设置",
+      "delete": "删除",
+      "thinking": "启用/禁用 思考链模式",
+      "reasoning": "推理深度（thinking 开启时生效）"
+    }
+  },
+
+  "providerDetail": {
+    "back": "← 返回列表",
+    "title": "{{name}}",
+    "save": "保存",
+    "section": {
+      "connection": "连接状态",
+      "basicInfo": "基础信息",
+      "apiKey": "API Key",
+      "modelParams": "模型参数",
+      "danger": "危险操作"
+    },
+    "fields": {
+      "name": "名称",
+      "baseUrl": "Base URL",
+      "apiKey": "Key",
+      "model": "模型",
+      "placeholder": {
+        "baseUrl": "https://api.deepseek.com",
+        "model": "deepseek-v4-pro",
+        "apiKeySaved": "•••••••• (已保存)",
+        "apiKeyNew": "输入新 Key"
+      }
+    },
+    "connection": {
+      "ok": "连接正常",
+      "error": "连接失败",
+      "testing": "测试中…",
+      "untested": "未测试",
+      "latency": "{{ms}}ms",
+      "testButton": "🔍 测试连接",
+      "testingButton": "⏳ 测试中…"
+    },
+    "modelFetch": {
+      "button": "📋 获取模型列表",
+      "loading": "⏳ 加载中…",
+      "error": "缺少 API Key — 请先在上方 Key 框输入",
+      "errorFetch": "获取模型失败"
+    },
+    "advanced": {
+      "thinkingMode": "思考模式",
+      "thinkingDesc": "为复杂任务启用推理链",
+      "reasoning": "推理深度",
+      "max": "max — 更深推理（更多 token）",
+      "high": "high — 平衡（较少 token）"
+    },
+    "delete": {
+      "label": "删除此供应商",
+      "desc": "删除后无法恢复",
+      "button": "删除",
+      "confirm": "Delete \"{{name}}\"? This cannot be undone."
+    }
+  },
+
+  "presetSelector": {
+    "title": "添加供应商",
+    "subtitle": "选择预设，输入 API Key",
+    "close": "✕",
+    "presetLabel": "OpenAI 兼容预设（{{count}}）",
+    "customSection": "自定义配置",
+    "customPlaceholder": {
+      "name": "显示名称（如：我的私有代理）",
+      "baseUrl": "Base URL （如：https://llm.internal.company.com/v1）",
+      "model": "Model ID （如：gpt-4o, claude-3-5-sonnet, my-custom-model）"
+    },
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "粘贴 {{vendor}} 的 API Key",
+    "apiKeyHint": "你的 API Key 仅存储在本地",
+    "info": {
+      "baseUrl": "Base URL: <code>{{baseUrl}}</code>",
+      "model": "Model: <code>{{model}}</code>"
+    },
+    "cancel": "取消",
+    "add": "添加并启用"
+  },
+
+  "settings": {
+    "title": "偏好设置",
+    "language": "语言",
+    "systemDefault": "跟随系统",
+    "zh": "中文",
+    "en": "English"
+  },
+
+  "toast": {
+    "providerSwitched": "✓ {{name}} 已切换 · {{baseUrl}} / {{model}}",
+    "modelUpdatedActive": "✓ {{name}} 已切换到 {{model}}",
+    "modelUpdated": "✓ 模型已更新为 {{model}}",
+    "thinkingEnabled": "✓ 已开启思考模式",
+    "thinkingDisabled": "✓ 已关闭思考模式",
+    "effortSet": "✓ 推理深度设为 {{effort}}",
+    "configDetected": "✓ 检测到 Deep Code 当前配置，已应用对应 provider",
+    "configImported": "✓ 已从 settings.json 导入并应用",
+    "configCreated": "✓ 已创建 Deep Code 配置文件"
+  },
+
+  "dialog": {
+    "deleteProvider": "Delete this provider?",
+    "noConfigFound": "未在 ~/.deepcode/settings.json 中找到完整配置"
+  },
+
+  "tray": {
+    "openMainWindow": "打开主界面",
+    "openOfficialSite": "打开官方网站",
+    "noActiveProvider": "未激活 — 在主窗口选择供应商",
+    "switchProvider": "切换供应商",
+    "noProviders": "（暂无供应商）",
+    "quit": "退出"
+  }
+}

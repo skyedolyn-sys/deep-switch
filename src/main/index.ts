@@ -3,10 +3,12 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import { ProviderManager, ProviderConfig } from './provider-manager';
-import { BUILTIN_PRESETS } from './presets';
+import { BUILTIN_PRESETS, localizePreset } from './presets';
 import { testProviderConnection } from './health-check';
 import { guessVendorFromUrl } from './vendors';
 import { fetchQuota, QuotaInfo } from './quota';
+import zh from '../renderer/locales/zh.json';
+import en from '../renderer/locales/en.json';
 
 const DEEPCODE_CONFIG = `${os.homedir()}/.deepcode/settings.json`;
 
@@ -33,6 +35,29 @@ function iconPath(name: string): string {
     return path.join(process.resourcesPath, 'public', 'icons', name);
   }
   return path.join(__dirname, '..', '..', 'public', 'icons', name);
+}
+
+const LOCALES = { zh, en };
+
+function getSystemLang(): 'zh' | 'en' {
+  const locale = app.getLocale().toLowerCase();
+  return locale.startsWith('zh') ? 'zh' : 'en';
+}
+
+function getLang(): 'zh' | 'en' {
+  const preferred = providerManager?.getSettings().preferredLanguage;
+  if (preferred === 'zh' || preferred === 'en') return preferred;
+  return getSystemLang();
+}
+
+function tr(key: string): string {
+  const locale = LOCALES[getLang()] as Record<string, any>;
+  const parts = key.split('.');
+  let value: any = locale;
+  for (const part of parts) {
+    value = value?.[part];
+  }
+  return typeof value === 'string' ? value : key;
 }
 
 // ─── Window ─────────────────────────────────────────────────────
@@ -108,7 +133,7 @@ function formatActiveLabel(p: ProviderConfig): string {
   const snap = healthCache.get(p.id);
   const dot = snap ? (snap.ok ? '🟢' : '🔴') : '🟡';
   const right = snap?.quota?.text
-    ?? (snap ? `${snap.latencyMs}ms` : '未测试');
+    ?? (snap ? `${snap.latencyMs}ms` : tr('provider.status.untested'));
   return `${p.name} · ${vendor} · ${dot} ${right}`;
 }
 
@@ -119,31 +144,31 @@ function rebuildTrayMenu(): void {
 
   const items: Electron.MenuItemConstructorOptions[] = [
     {
-      label: '打开主界面',
+      label: tr('tray.openMainWindow'),
       click: () => showMainWindow(),
     },
     {
-      label: '打开官方网站',
+      label: tr('tray.openOfficialSite'),
       click: () => shell.openExternal(OFFICIAL_SITE_URL).catch((err) => {
         console.error('[Deep Switch] failed to open official site:', err);
       }),
     },
     { type: 'separator' },
     {
-      label: active ? formatActiveLabel(active) : '未激活 — 在主窗口选择供应商',
+      label: active ? formatActiveLabel(active) : tr('tray.noActiveProvider'),
       enabled: false,
     },
     {
-      label: '切换供应商',
+      label: tr('tray.switchProvider'),
       submenu: providers.length === 0
-        ? [{ label: '（暂无供应商）', enabled: false }]
+        ? [{ label: tr('tray.noProviders'), enabled: false }]
         : providers.map((p) => ({
             label: `${p.name}${p.id === active?.id ? '  ✓' : ''}`,
             click: () => applyFromTray(p.id),
           })),
     },
     { type: 'separator' },
-    { label: '退出', click: () => { isQuitting = true; app.quit(); } },
+    { label: tr('tray.quit'), click: () => { isQuitting = true; app.quit(); } },
   ];
 
   tray.setContextMenu(Menu.buildFromTemplate(items));
@@ -162,9 +187,7 @@ function createTray(): void {
   // we ship a black-on-transparent "template" image and let macOS recolor it
   // to match the menu bar theme (white on dark, black on light).
   const trayPath = iconPath('deepseek-tray-template.png');
-  console.log('[Deep Switch] tray icon path:', trayPath, 'exists:', fs.existsSync(trayPath));
   const img = nativeImage.createFromPath(trayPath);
-  console.log('[Deep Switch] tray icon empty?', img.isEmpty(), 'size:', img.getSize());
   // Provide a @2x variant for Retina menu bars.
   const retinaPath = iconPath('deepseek-tray-template-44.png');
   if (fs.existsSync(retinaPath)) {
@@ -201,14 +224,12 @@ function setupIpcHandlers(): void {
     rebuildTrayMenu();
     return result;
   });
-  ipcMain.handle('providers:restore', () => {
-    const ok = providerManager.restoreFromBackup();
-    if (ok) rebuildTrayMenu();
-    return ok;
-  });
 
   // Presets
-  ipcMain.handle('presets:list', () => BUILTIN_PRESETS);
+  ipcMain.handle('presets:list', () => {
+    const lang = getLang();
+    return BUILTIN_PRESETS.map((p) => localizePreset(p, lang));
+  });
 
   // Health check + model fetch
   ipcMain.handle('providers:test', async (_e, { providerId }: { providerId: string }) => {
@@ -226,11 +247,9 @@ function setupIpcHandlers(): void {
   });
 
   ipcMain.handle('models:fetch', async (_e, { baseUrl, apiKey }: { baseUrl: string; apiKey: string }) => {
-    console.log('[Deep Switch] models:fetch', { baseUrl, keyLen: (apiKey||'').length });
     try {
       const { fetchModelList } = await import('./health-check');
       const models = await fetchModelList(baseUrl, apiKey);
-      console.log('[Deep Switch] models:fetch got', models.length, 'models');
       return { ok: true, models };
     } catch (err: any) {
       console.error('[Deep Switch] models:fetch failed:', err.message);
@@ -245,8 +264,18 @@ function setupIpcHandlers(): void {
   ipcMain.handle('settings:get', () => providerManager.getSettings());
   ipcMain.handle('settings:save', (_e, settings) => providerManager.saveSettings(settings));
 
-  // Informational — does the user have a backup to restore?
-  ipcMain.handle('backup:has', () => providerManager.hasBackup());
+  // Deep Code config path detection / creation
+  ipcMain.handle('deepcode:path', () => ({
+    path: providerManager.getDeepCodeConfigPath(),
+    exists: providerManager.hasDeepCodeConfig(),
+  }));
+  ipcMain.handle('deepcode:ensureConfig', () => {
+    providerManager.ensureDeepCodeConfigExists();
+    return {
+      path: providerManager.getDeepCodeConfigPath(),
+      exists: providerManager.hasDeepCodeConfig(),
+    };
+  });
 }
 
 // ─── Bootstrap ──────────────────────────────────────────────────
@@ -255,11 +284,8 @@ app.whenReady().then(() => {
   providerManager = new ProviderManager();
   setupIpcHandlers();
 
-  // Dock icon (macOS only)
-  if (process.platform === 'darwin' && app.dock) {
-    const dockImg = nativeImage.createFromPath(iconPath('deepseek-dock.png'));
-    if (!dockImg.isEmpty()) app.dock.setIcon(dockImg);
-  }
+  // Dock icon is handled automatically by macOS from the .icns in the app bundle.
+  // Do NOT call app.dock.setIcon() — it bypasses the system squircle mask.
 
   createWindow();
   createTray();

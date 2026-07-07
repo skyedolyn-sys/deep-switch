@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ProviderPreset } from '../App';
 import { presetDisplayName } from '../../main/presets';
 
@@ -8,11 +9,11 @@ interface Props {
 }
 
 export function PresetSelector({ onAdd, onClose }: Props) {
+  const { t } = useTranslation();
   const [presets, setPresets] = useState<ProviderPreset[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [apiKey, setApiKey] = useState('');
 
-  // Custom-blank fields
   const [cName, setCName] = useState('');
   const [cBaseUrl, setCBaseUrl] = useState('');
   const [cModel, setCModel] = useState('');
@@ -28,7 +29,6 @@ export function PresetSelector({ onAdd, onClose }: Props) {
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
-    // Reset custom fields when switching
     if (id !== 'custom-blank') {
       setCName(''); setCBaseUrl(''); setCModel('');
     }
@@ -57,13 +57,13 @@ export function PresetSelector({ onAdd, onClose }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <form className="modal-panel" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <div className="modal-header">
-          <h2>添加供应商</h2>
-          <button type="button" className="modal-close-btn" onClick={onClose}>✕</button>
+          <h2>{t('presetSelector.title')}</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>{t('presetSelector.close')}</button>
         </div>
 
         <div className="modal-body">
           <div className="form-section">
-            <label>OpenAI 兼容预设（{presets.length}）</label>
+            <label>{t('presetSelector.presetLabel', { count: presets.length })}</label>
             <div className="preset-grid">
               {presets.map((p) => (
                 <div
@@ -84,24 +84,24 @@ export function PresetSelector({ onAdd, onClose }: Props) {
 
           {isCustom && (
             <div className="form-section">
-              <label>自定义配置</label>
+              <label>{t('presetSelector.customSection')}</label>
               <input
                 className="form-input"
-                placeholder="显示名称（如：我的私有代理）"
+                placeholder={t('presetSelector.customPlaceholder.name')}
                 value={cName}
                 onChange={(e) => setCName(e.target.value)}
                 autoFocus
               />
               <input
                 className="form-input"
-                placeholder="Base URL （如：https://llm.internal.company.com/v1）"
+                placeholder={t('presetSelector.customPlaceholder.baseUrl')}
                 value={cBaseUrl}
                 onChange={(e) => setCBaseUrl(e.target.value)}
                 style={{ marginTop: 8 }}
               />
               <input
                 className="form-input"
-                placeholder="Model ID （如：gpt-4o, claude-3-5-sonnet, my-custom-model）"
+                placeholder={t('presetSelector.customPlaceholder.model')}
                 value={cModel}
                 onChange={(e) => setCModel(e.target.value)}
                 style={{ marginTop: 8 }}
@@ -111,19 +111,19 @@ export function PresetSelector({ onAdd, onClose }: Props) {
 
           {selected && (
             <div className="form-section">
-              <label>API Key</label>
+              <label>{t('presetSelector.apiKey')}</label>
               <input
                 type="password"
                 className="api-key-input"
-                placeholder={`粘贴 ${selected.vendor} 的 API Key`}
+                placeholder={t('presetSelector.apiKeyPlaceholder', { vendor: selected.vendor })}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 autoFocus={!isCustom}
               />
               {!isCustom && (
                 <div className="form-hint">
-                  <span>Base URL: <code>{selected.baseUrl}</code></span>
-                  <span>Model: <code>{selected.model}</code></span>
+                  <span dangerouslySetInnerHTML={{ __html: t('presetSelector.info.baseUrl', { baseUrl: selected.baseUrl }) }} />
+                  <span dangerouslySetInnerHTML={{ __html: t('presetSelector.info.model', { model: selected.model }) }} />
                 </div>
               )}
             </div>
@@ -131,9 +131,9 @@ export function PresetSelector({ onAdd, onClose }: Props) {
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>取消</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t('presetSelector.cancel')}</button>
           <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
-            添加并启用
+            {t('presetSelector.add')}
           </button>
         </div>
       </form>

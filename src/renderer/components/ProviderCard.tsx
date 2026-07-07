@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Provider } from '../App';
 
 interface Props {
@@ -31,11 +32,11 @@ function vendorTag(vendor: string): string {
 }
 
 export function ProviderCard({ provider, isActive, testResult, onApply, onSettings, onTest, onDelete, onModelPicked, onToggleThinking, onSetEffort }: Props) {
+  const { t } = useTranslation();
   const vendor = guessVendor(provider.baseUrl);
   const [models, setModels] = useState<ModelState>({ loading: false, open: false, models: [] });
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!models.open) return;
     const onDown = (e: MouseEvent) => {
@@ -48,23 +49,18 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
   }, [models.open]);
 
   const handleFetchModels = async () => {
-    console.log('[deep-switch] handleFetchModels clicked', { providerId: provider.id, baseUrl: provider.baseUrl });
-    // If already open, just close
     if (models.open) {
       setModels((s) => ({ ...s, open: false }));
       return;
     }
     setModels({ loading: true, open: true, models: [] });
     const full = await window.deepSwitch.getProvider(provider.id);
-    console.log('[deep-switch] getProvider result:', full ? `key_len=${(full.apiKey||'').length}` : 'null');
     if (!full) {
-      setModels({ loading: false, open: true, models: [], error: '无法读取 provider' });
+      setModels({ loading: false, open: true, models: [], error: t('providerDetail.modelFetch.error') });
       return;
     }
     const result = await window.deepSwitch.fetchModels(full.baseUrl, full.apiKey);
-    console.log('[deep-switch] fetchModels result:', result);
     if (result.ok) {
-      // Sort: current model first, then by name
       const cur = provider.model;
       const sorted = [...result.models].sort((a, b) => {
         if (a === cur) return -1;
@@ -73,7 +69,7 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
       });
       setModels({ loading: false, open: true, models: sorted });
     } else {
-      setModels({ loading: false, open: true, models: [], error: result.error || '获取失败' });
+      setModels({ loading: false, open: true, models: [], error: result.error || t('providerDetail.modelFetch.errorFetch') });
     }
   };
 
@@ -85,16 +81,16 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
   let dot: React.ReactNode, txt: string;
   if (testResult?.status === 'testing') {
     dot = <div className="status-dot testing" />;
-    txt = '检测中…';
+    txt = t('provider.status.testing');
   } else if (testResult?.status === 'ok') {
     dot = <div className="status-dot online" />;
     txt = `${testResult.latencyMs}ms`;
   } else if (testResult?.status === 'error') {
     dot = <div className="status-dot error" />;
-    txt = testResult.error || '连接失败';
+    txt = testResult.error || t('provider.status.error');
   } else {
     dot = <div className="status-dot unknown" />;
-    txt = '未测试';
+    txt = t('provider.status.untested');
   }
 
   return (
@@ -105,14 +101,14 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
           <div className="card-info">
             <div className="card-name-row">
               <span className="card-name">{provider.name}</span>
-              {isActive && <span className="card-active-tag">已激活</span>}
-              {provider.thinkingEnabled && <span className="card-thinking-tag">思考</span>}
+              {isActive && <span className="card-active-tag">{t('provider.status.active')}</span>}
+              {provider.thinkingEnabled && <span className="card-thinking-tag">{t('provider.status.thinking')}</span>}
             </div>
             <div className="card-detail">
               <button
                 className="card-model-button"
                 onClick={handleFetchModels}
-                title="点击获取/切换可用模型"
+                title={t('provider.tooltips.model')}
               >
                 <span className="mono">{provider.model}</span>
                 <span className="card-model-chevron">{models.open ? '▴' : '▾'}</span>
@@ -128,7 +124,7 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
               <button
                 className={`control-chip ${provider.thinkingEnabled ? 'on' : ''}`}
                 onClick={() => onToggleThinking(!provider.thinkingEnabled)}
-                title="启用/禁用 思考链模式"
+                title={t('provider.tooltips.thinking')}
               >
                 <span className="control-chip-dot" />
                 <span>Thinking</span>
@@ -138,7 +134,7 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
                 value={provider.reasoningEffort}
                 disabled={!provider.thinkingEnabled}
                 onChange={(e) => onSetEffort(e.target.value as 'high' | 'max')}
-                title="推理深度（thinking 开启时生效）"
+                title={t('provider.tooltips.reasoning')}
               >
                 <option value="max">max</option>
                 <option value="high">high</option>
@@ -151,17 +147,17 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
           <button
             className={`card-btn apply-btn ${isActive ? 'active' : 'primary'}`}
             onClick={onApply}
-            title="切换 Deep Code 到这个 provider"
+            title={t('provider.tooltips.apply')}
           >
-            {isActive ? '✓ 已激活' : '启用'}
+            {isActive ? t('provider.status.active') : t('provider.actions.activate')}
           </button>
-          <button className="card-btn icon-btn" onClick={onTest} disabled={testResult?.status === 'testing'} title="测试连接">
+          <button className="card-btn icon-btn" onClick={onTest} disabled={testResult?.status === 'testing'} title={t('provider.tooltips.test')}>
             {testResult?.status === 'testing' ? '⏳' : '🔍'}
           </button>
-          <button className="card-btn icon-btn" onClick={onSettings} title="设置">
+          <button className="card-btn icon-btn" onClick={onSettings} title={t('provider.tooltips.settings')}>
             ⚙
           </button>
-          <button className="card-btn icon-btn danger" onClick={onDelete} title="删除">
+          <button className="card-btn icon-btn danger" onClick={onDelete} title={t('provider.tooltips.delete')}>
             🗑
           </button>
         </div>
@@ -170,10 +166,14 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
       {models.open && (
         <div className="model-dropdown">
           <div className="model-dropdown-header">
-            {models.loading ? '加载模型列表…' : models.error ? `❌ ${models.error}` : `${models.models.length} 个可用模型 — 点选切换`}
+            {models.loading
+              ? t('provider.modelDropdown.loading')
+              : models.error
+                ? t('provider.modelDropdown.error', { error: models.error })
+                : t('provider.modelDropdown.available', { count: models.models.length })}
           </div>
           {!models.loading && !models.error && models.models.length === 0 && (
-            <div className="model-empty">该 provider 未返回任何模型</div>
+            <div className="model-empty">{t('provider.modelDropdown.empty')}</div>
           )}
           <div className="model-list">
             {models.models.map((m) => (
@@ -183,7 +183,7 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
                 onClick={() => handlePickModel(m)}
               >
                 <span className="mono">{m}</span>
-                {m === provider.model && <span className="model-current-tag">当前</span>}
+                {m === provider.model && <span className="model-current-tag">{t('provider.modelDropdown.current')}</span>}
               </button>
             ))}
           </div>
