@@ -10,8 +10,8 @@
 
 | 플랫폼 | 다운로드 | 크기 |
 |---|---|---|
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned.dmg) | ~183 MB |
+| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned-mac.zip) | ~176 MB |
 | Linux / Windows | [소스에서 빌드](#개발) | — |
 
 > ⚠️ **이 빌드는 서명되지 않았으며 Apple 공증도 받지 않았습니다.** 첫 실행 시 macOS 가 *'"Deep Switch" 가 손상되어 열 수 없습니다'* 를 표시합니다. 우회 방법:

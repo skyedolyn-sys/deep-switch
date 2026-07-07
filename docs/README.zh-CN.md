@@ -10,8 +10,8 @@
 
 | 平台 | 下载 | 大小 |
 |---|---|---|
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned.dmg) | ~183 MB |
+| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned-mac.zip) | ~176 MB |
 | Linux / Windows | [源码编译](#开发) | — |
 
 > ⚠️ **构建未签名也未经过苹果公证。** 首次启动 macOS 会提示 *「Deep Switch 已损坏，无法打开」*。绕过方法：

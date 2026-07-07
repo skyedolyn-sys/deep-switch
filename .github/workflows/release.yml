@@ -36,11 +36,14 @@ jobs:
       - name: Build (main + renderer)
         run: npm run build
 
-      - name: Package (macOS)
+      - name: Package (macOS, ad-hoc signed)
         if: matrix.os == 'macos-latest'
-        run: npx electron-builder --mac --publish never
+        run: bash scripts/build-mac.sh
         env:
-          # Skip notarization on CI unsigned builds; replace with secrets for signed releases
+          # Skip notarization — ad-hoc signing only, no Developer ID.
+          # When a Developer ID cert becomes available, set:
+          #   CSC_LINK, CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
+          # and remove CSC_IDENTITY_AUTO_DISCOVERY=false.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Package (Linux)
@@ -56,8 +59,8 @@ jobs:
         with:
           name: deep-switch-${{ matrix.os }}
           path: |
-            dist/*.dmg
-            dist/*.zip
+            dist/Deep Switch-*.dmg
+            dist/Deep Switch-*.zip
             dist/*.AppImage
             dist/*.exe
           if-no-files-found: warn

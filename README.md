@@ -11,8 +11,8 @@
 
 | Platform | Download | Size |
 |---|---|---|
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64.dmg) | ~183 MB |
-| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-resigned.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned.dmg) | ~203 MB |
+| macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-resigned-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned-mac.zip) | ~183 MB |
 | Linux / Windows | [Build from source](#development) | — |
 
 > ⚠️ **The build is not signed or notarized.** macOS will show *"Deep Switch is damaged and can't be opened"* the first time. To bypass:
