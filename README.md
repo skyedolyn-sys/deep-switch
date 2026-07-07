@@ -15,7 +15,14 @@
 | macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
 | Linux / Windows | [Build from source](#development) | — |
 
-> ⚠️ The build is **unsigned**. First launch from DMG may need right-click → *Open* to clear the Gatekeeper prompt.
+> ⚠️ **The build is not signed or notarized.** macOS will show *"Deep Switch is damaged and can't be opened"* the first time. To bypass:
+> 1. Open the DMG, drag **Deep Switch** into `/Applications`.
+> 2. In **Finder**, navigate to `/Applications`, right-click **Deep Switch** → **Open** → confirm the dialog.
+> 3. From now on, double-click works normally.
+>
+> Alternative (terminal): `sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
+>
+> We will switch to a signed/notarized release once we have a verified Apple Developer ID. Until then, please use the workaround above.
 
 ---
 

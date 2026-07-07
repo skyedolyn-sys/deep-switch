@@ -14,7 +14,14 @@
 | macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
 | Linux / Windows | [源码编译](#开发) | — |
 
-> ⚠️ 构建**未签名**。首次从 DMG 启动可能需要右键 → *打开* 以绕过 Gatekeeper。
+> ⚠️ **构建未签名也未经过苹果公证。** 首次启动 macOS 会提示 *「Deep Switch 已损坏，无法打开」*。绕过方法：
+> 1. 打开 DMG，把 **Deep Switch** 拖入 `/Applications`。
+> 2. 在 **Finder** 进入 `/Applications`，右键 **Deep Switch** → **打开** → 在弹窗中确认。
+> 3. 之后就可以正常双击启动了。
+>
+> 命令行方式：`sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
+>
+> 等我们拿到 Apple Developer ID 之后会切换为签名 + 公证版本。在此之前请用上面的方法。
 
 ---
 

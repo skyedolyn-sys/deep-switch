@@ -14,7 +14,14 @@
 | macOS (Apple Silicon) | [`Deep Switch-0.1.0-arm64-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-mac.zip) | ~176 MB |
 | Linux / Windows | [소스에서 빌드](#개발) | — |
 
-> ⚠️ 빌드는 **서명되지 않았습니다**. DMG 에서 처음 실행할 때는 우클릭 → *열기* 로 Gatekeeper 를 통과해야 할 수 있습니다.
+> ⚠️ **이 빌드는 서명되지 않았으며 Apple 공증도 받지 않았습니다.** 첫 실행 시 macOS 가 *'"Deep Switch" 가 손상되어 열 수 없습니다'* 를 표시합니다. 우회 방법:
+> 1. DMG 를 열고 **Deep Switch** 를 `/Applications` 로 드래그합니다.
+> 2. **Finder** 에서 `/Applications` 로 이동해 **Deep Switch** 를 우클릭 → **열기** → 대화 상자에서 확인을 클릭합니다.
+> 3. 그 후로는 일반적인 더블 클릭으로 실행할 수 있습니다.
+>
+> 터미널 방법: `sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
+>
+> Apple Developer ID 를 확보하는 대로 서명 + 공증 버전으로 전환할 예정입니다. 그때까지 위 방법을 사용해 주세요.
 
 ---
 
