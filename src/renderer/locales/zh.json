@@ -3,7 +3,7 @@
   "version": "v0.1.0",
 
   "sidebar": {
-    "addProvider": "+ 添加供应商",
+    "addProvider": "添加供应商",
     "deepCodeConfig": "Deep Code 配置",
     "active": "激活",
     "noActive": "未激活 — 点下方任一 provider 的「启用」按钮",
@@ -19,6 +19,7 @@
   "providerList": {
     "title": "供应商",
     "hint": "点「启用」直接切换 Deep Code 的 API",
+    "providerCount": "{{count}} 个供应商",
     "empty": {
       "title": "还没有供应商",
       "hint": "点左侧 + 添加供应商"

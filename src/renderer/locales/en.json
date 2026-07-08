@@ -3,7 +3,7 @@
   "version": "v0.1.0",
 
   "sidebar": {
-    "addProvider": "+ Add Provider",
+    "addProvider": "Add Provider",
     "deepCodeConfig": "Deep Code Config",
     "active": "Active",
     "noActive": "No active provider — enable one below",
@@ -19,6 +19,7 @@
   "providerList": {
     "title": "Providers",
     "hint": "Click Enable to switch Deep Code's API",
+    "providerCount": "{{count}} providers",
     "empty": {
       "title": "No providers yet",
       "hint": "Click + Add Provider on the left"

@@ -9,12 +9,25 @@ cd "$(dirname "$0")/.."
 VERSION=$(node -p "require('./package.json').version")
 APP="dist/mac-arm64/Deep Switch.app"
 
-# 1. Build renderer + main
-echo ">>> [1/4] Building..."
+# 0. Force-clean caches and stale outputs
+echo ">>> [0/6] Cleaning caches and stale outputs…"
+rm -rf dist
+rm -rf ~/Library/Application\ Support/deep-switch/Cache 2>/dev/null || true
+rm -rf ~/Library/Application\ Support/deep-switch/GPUCache 2>/dev/null || true
+rm -rf ~/Library/Application\ Support/deep-switch/Code\ Cache 2>/dev/null || true
+rm -rf node_modules/.vite 2>/dev/null || true
+rm -rf ~/.deep-switch/last-applied.flag 2>/dev/null || true
+
+# 1. Regenerate icons from the user-provided source
+echo ">>> [1/6] Regenerating icons…"
+python3 scripts/generate-icons.py 2>&1 | tail -3
+
+# 2. Build renderer + main
+echo ">>> [2/6] Building main + renderer…"
 npm run build
 
-# 2. electron-builder packages .app (no Developer ID — ad-hoc only)
-echo ">>> [2/4] Packaging .app..."
+# 3. electron-builder packages .app (no Developer ID — ad-hoc only)
+echo ">>> [3/6] Packaging .app…"
 rm -rf dist/mac-arm64
 npx electron-builder --mac --dir --publish never
 
@@ -23,12 +36,12 @@ if [[ ! -d "$APP" ]]; then
   exit 1
 fi
 
-# 3. Re-sign with hardened runtime + entitlements
-echo ">>> [3/4] Re-signing (hardened runtime + entitlements)…"
+# 4. Re-sign with hardened runtime + entitlements
+echo ">>> [4/6] Re-signing (hardened runtime + entitlements)…"
 bash scripts/sign-mac.sh "$APP"
 
-# 4. Build the DMG and zip from the signed .app
-echo ">>> [4/4] Packaging DMG + zip…"
+# 5. Build the DMG and zip from the signed .app
+echo ">>> [5/6] Packaging DMG + zip…"
 
 STAGE=$(mktemp -d)
 mkdir -p "$STAGE/Deep Switch"
@@ -48,7 +61,7 @@ ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP_PATH"
 rm -rf "$STAGE"
 
 echo ""
-echo ">>> Built:"
+echo ">>> [6/6] Done. Artifacts:"
 ls -lh "$DMG_PATH" "$ZIP_PATH"
 echo ""
 echo "To verify signature inside the DMG:"

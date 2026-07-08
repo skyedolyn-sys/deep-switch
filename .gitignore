@@ -33,3 +33,7 @@ node_modules/
 
 # Local runtime state (user's stored provider config)
 ~/.deep-switch/config.json
+
+# Python pycache
+__pycache__/
+*.pyc

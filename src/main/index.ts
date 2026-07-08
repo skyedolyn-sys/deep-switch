@@ -7,8 +7,33 @@ import { BUILTIN_PRESETS, localizePreset } from './presets';
 import { testProviderConnection } from './health-check';
 import { guessVendorFromUrl } from './vendors';
 import { fetchQuota, QuotaInfo } from './quota';
-import zh from '../renderer/locales/zh.json';
-import en from '../renderer/locales/en.json';
+
+// Load translation tables from disk so we don't depend on the JSON imports
+// being resolved at runtime by Electron's asar. Locales ship via
+// extraResources → Contents/Resources/locales/<lang>.json
+function loadLocale(lang: 'zh' | 'en'): Record<string, any> {
+  const candidates: string[] = [];
+  if (app.isPackaged) {
+    candidates.push(path.join(process.resourcesPath, 'locales', `${lang}.json`));
+  }
+  candidates.push(
+    path.join(__dirname, 'locales', `${lang}.json`),
+    path.join(__dirname, '..', 'renderer', 'locales', `${lang}.json`),
+    path.join(__dirname, '..', '..', 'src', 'renderer', 'locales', `${lang}.json`),
+  );
+  for (const file of candidates) {
+    if (fs.existsSync(file)) {
+      try { return JSON.parse(fs.readFileSync(file, 'utf-8')); }
+      catch { /* fall through */ }
+    }
+  }
+  return {};
+}
+
+const PACKAGED_LOCALES: Record<string, Record<string, any>> = {
+  zh: loadLocale('zh'),
+  en: loadLocale('en'),
+};
 
 const DEEPCODE_CONFIG = `${os.homedir()}/.deepcode/settings.json`;
 
@@ -37,7 +62,7 @@ function iconPath(name: string): string {
   return path.join(__dirname, '..', '..', 'public', 'icons', name);
 }
 
-const LOCALES = { zh, en };
+const LOCALES = PACKAGED_LOCALES;
 
 function getSystemLang(): 'zh' | 'en' {
   const locale = app.getLocale().toLowerCase();

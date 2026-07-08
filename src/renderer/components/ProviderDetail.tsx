@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import type { Provider } from '../App';
 
 interface Props {
@@ -94,7 +95,12 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
     testResult?.status === 'testing' ? 'status-testing' : '';
 
   return (
-    <div className="detail-page">
+    <motion.div
+      className="detail-page"
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
       <div className="detail-nav">
         <button className="nav-back" onClick={onBack}><span className="nav-arrow">←</span> {t('providerDetail.back')}</button>
         <span className="nav-title">{t('providerDetail.title', { name: provider.name })}</span>
@@ -221,6 +227,6 @@ export function ProviderDetail({ provider, onSave, onDelete, onBack, onTest, tes
           </div>
         </section>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import type { ProviderPreset } from '../App';
 
 interface Props {
@@ -57,8 +58,21 @@ export function PresetSelector({ onAdd, onClose }: Props) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <form className="modal-panel" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
+    <motion.div
+      className="modal-overlay"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
+    >
+      <motion.form
+        className="modal-panel"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="modal-header">
           <h2>{t('presetSelector.title')}</h2>
           <button type="button" className="modal-close-btn" onClick={onClose}>{t('presetSelector.close')}</button>
@@ -139,7 +153,7 @@ export function PresetSelector({ onAdd, onClose }: Props) {
             {t('presetSelector.add')}
           </button>
         </div>
-      </form>
-    </div>
+      </motion.form>
+    </motion.div>
   );
 }

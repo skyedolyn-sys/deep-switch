@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Generate Deep Switch macOS-style app icons (circular-arc version).
+"""Generate Deep Switch icons from the user-provided source PNG.
 
-This is the previous version that matched Chrome's dock size:
-- Canvas: 1024x1024
-- Frame: 80.5% of canvas (824px), centered, white fill
-- Corner radius: 160px circular arc
-- Whale: 78% of canvas (640px), centered, using the user-provided silhouette
+Source: a 640x640 PNG with a colored (DeepSeek blue) background and a
+black whale silhouette.
+
+Outputs:
+- App / Dock icon: the source PNG scaled with a small transparent margin.
+  macOS applies its own squircle mask at render time.
+- Tray icons: pure silhouette, recolored to brand blue (template variants
+  are produced in black for macOS dark-mode handling).
+- Sidebar icons: silhouette on transparent — white for dark backgrounds,
+  black for light backgrounds (selected via prefers-color-scheme in JSX).
 """
 from __future__ import annotations
 
@@ -21,39 +26,50 @@ PUBLIC_ICONS = ROOT / "public" / "icons"
 BUILD = ROOT / "build"
 ICONSET = BUILD / "iconset"
 
+# Original whale silhouette source (640x640, blue background + black silhouette)
 PNG_SRC = ROOT / "public" / "icons" / "deepseek-user.png"
+PNG_SRC_USER = Path("/Users/sky/Downloads/deepseek.png")
 
-FRAME_RATIO = 0.805
-WHALE_RATIO = 0.64  # ~82% of the previous 0.78, whale shrunk slightly
-CORNER_RATIO = 160 / 1024  # ~0.15625
+# Use the source PNG verbatim as the app icon — no custom frame, no crop.
+# macOS automatically applies its own squircle mask when rendering the icon
+# in Finder / Dock / app switcher. Keep a small transparent margin so the
+# whale isn't clipped at the rounded corners.
+SOURCE_PADDING = 0.06  # 6% transparent margin on each side
 
 
-def render_dock_icon(size: int, whale_src: Image.Image) -> Image.Image:
+def extract_silhouette(src: Image.Image) -> Image.Image:
+    """Take the user-provided PNG and return a pure-black-on-transparent whale.
+
+    The source PNG has a colored background (e.g. #4D6BFE blue) and a black
+    whale silhouette. We invert-by-luminance so dark pixels (the whale)
+    become the foreground alpha mask.
+    """
+    rgb = src.convert("RGBA")
+    gray = rgb.convert("L")
+    mask = Image.eval(gray, lambda v: 255 - v)
+    out = Image.new("RGBA", rgb.size, (0, 0, 0, 0))
+    out.paste(rgb, (0, 0), mask)
+    return out
+
+
+def render_dock_icon(size: int, source: Image.Image) -> Image.Image:
+    """Render the dock/app icon by scaling the source PNG with a small margin.
+
+    The source already contains the correct artwork (blue background + black
+    whale silhouette). We do not recolor, frame, or silhouette-extract — the
+    squircle mask is applied by macOS at render time.
+    """
+    inner = int(round(size * (1 - 2 * SOURCE_PADDING)))
+    scaled = source.convert("RGBA").resize((inner, inner), Image.LANCZOS)
+
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    frame_size = int(round(size * FRAME_RATIO))
-    radius = int(round(frame_size * (160 / 824)))
-    frame_x = (size - frame_size) // 2
-    frame_y = (size - frame_size) // 2
-
-    bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle(
-        (frame_x, frame_y, frame_x + frame_size, frame_y + frame_size),
-        radius=radius,
-        fill=255,
-    )
-    out.paste(bg, (0, 0), mask)
-
-    whale_size = int(round(size * WHALE_RATIO))
-    whale = whale_src.resize((whale_size, whale_size), Image.LANCZOS)
-    whale_x = (size - whale_size) // 2
-    whale_y = (size - whale_size) // 2
-    out.paste(whale, (whale_x, whale_y), whale)
+    offset = (size - inner) // 2
+    out.paste(scaled, (offset, offset), scaled)
     return out
 
 
 def render_tray_icon(size: int, whale_src: Image.Image, template: bool = False) -> Image.Image:
+    """Tray icon: silhouette only, no frame."""
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     whale = whale_src.resize((size, size), Image.LANCZOS)
     if template:
@@ -61,31 +77,28 @@ def render_tray_icon(size: int, whale_src: Image.Image, template: bool = False) 
         black = Image.new("RGBA", (size, size), (0, 0, 0, 255))
         out.paste(black, (0, 0), gray)
     else:
-        # Make silhouette blue for non-template tray icon.
+        # Re-color silhouette to brand blue
         colored = Image.new("RGBA", (size, size), (77, 107, 254, 255))
         alpha = whale.convert("L")
         out.paste(colored, (0, 0), alpha)
     return out
 
 
-def render_sidebar_icon(size: int, whale_src: Image.Image) -> Image.Image:
+def render_sidebar_icon(size: int, whale_src: Image.Image, white: bool = False) -> Image.Image:
+    """Sidebar logo: silhouette on transparent (no frame).
+
+    Default: black silhouette (for dark backgrounds).
+    white=True: white silhouette (for light backgrounds).
+    """
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    corner = int(round(size * (160 / 1024)))
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0, size, size), radius=corner, fill=255)
-    bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
-    out.paste(bg, (0, 0), mask)
-
-    whale_size = int(round(size * 0.72))
-    whale = whale_src.resize((whale_size, whale_size), Image.LANCZOS)
-    whale_x = (size - whale_size) // 2
-    whale_y = (size - whale_size) // 2
-
-    # Blue silhouette
-    colored = Image.new("RGBA", (whale_size, whale_size), (77, 107, 254, 255))
-    alpha = whale.convert("L")
-    out.paste(colored, (whale_x, whale_y), alpha)
+    whale = whale_src.resize((size, size), Image.LANCZOS)
+    if white:
+        # Re-color the whale to pure white, keeping its alpha mask
+        recolored = Image.new("RGBA", whale.size, (255, 255, 255, 255))
+        recolored.putalpha(whale.split()[-1])
+        out.paste(recolored, (0, 0), recolored)
+    else:
+        out.paste(whale, (0, 0), whale)
     return out
 
 
@@ -123,14 +136,23 @@ def main() -> int:
     PUBLIC_ICONS.mkdir(parents=True, exist_ok=True)
     BUILD.mkdir(parents=True, exist_ok=True)
 
-    if not PNG_SRC.exists():
-        print(f"[generate-icons] Missing whale PNG: {PNG_SRC}", file=sys.stderr)
+    src_path = PNG_SRC_USER if PNG_SRC_USER.exists() else PNG_SRC
+    if not src_path.exists():
+        print(f"[generate-icons] Missing whale PNG: {src_path}", file=sys.stderr)
         return 1
+    print(f"[generate-icons] source: {src_path}")
 
-    whale_src = Image.open(PNG_SRC).convert("RGBA")
+    raw = Image.open(src_path).convert("RGBA")
 
+    # Extract just the silhouette (black whale on transparent) for tray + sidebar.
+    whale_src = extract_silhouette(raw)
+    whale_src.save(PUBLIC_ICONS / "deepseek-user.png")
+    print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-user.png'}")
+
+    # App icon (used for .icns and the large `deepseek-dock.png`) uses the
+    # source PNG verbatim — macOS applies its own squircle mask at render time.
     for size in (256, 512, 1024):
-        img = render_dock_icon(size, whale_src)
+        img = render_dock_icon(size, raw)
         if size == 256:
             path = PUBLIC_ICONS / "deepseek-dock.png"
             img.save(path)
@@ -141,9 +163,15 @@ def main() -> int:
         img.save(path)
         print(f"[generate-icons] wrote {path}")
 
-    sidebar = render_sidebar_icon(64, whale_src)
-    sidebar.save(PUBLIC_ICONS / "deepseek-sidebar.png")
-    print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-sidebar.png'}")
+    # White silhouette for dark sidebar background (default)
+    sidebar_white = render_sidebar_icon(64, whale_src, white=True)
+    sidebar_white.save(PUBLIC_ICONS / "deepseek-sidebar.png")
+    print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-sidebar.png'} (white, for dark bg)")
+
+    # Black silhouette for light sidebar background (prefers-color-scheme: light)
+    sidebar_black = render_sidebar_icon(64, whale_src, white=False)
+    sidebar_black.save(PUBLIC_ICONS / "deepseek-sidebar-dark.png")
+    print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-sidebar-dark.png'} (black, for light bg)")
 
     for size in (22, 44, 32):
         if size == 32:
@@ -158,7 +186,12 @@ def main() -> int:
     )
     print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-tray-template.png'}")
 
-    master1024 = render_dock_icon(1024, whale_src)
+    render_tray_icon(44, whale_src, template=True).save(
+        PUBLIC_ICONS / "deepseek-tray-template-44.png"
+    )
+    print(f"[generate-icons] wrote {PUBLIC_ICONS / 'deepseek-tray-template-44.png'}")
+
+    master1024 = render_dock_icon(1024, raw)
     create_iconset(master1024, ICONSET)
     build_icns(ICONSET, BUILD / "icon.icns")
     print(f"[generate-icons] wrote {BUILD / 'icon.icns'}")

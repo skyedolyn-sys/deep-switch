@@ -1,5 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import {
+  DeepSeek,
+  OpenAI,
+  Kimi,
+  Moonshot,
+  Zhipu,
+  SiliconCloud,
+  OpenRouter,
+  Groq,
+  Doubao,
+} from '@lobehub/icons';
 import type { Provider } from '../App';
 
 interface Props {
@@ -22,16 +34,83 @@ interface ModelState {
   error?: string;
 }
 
-function vendorTag(vendor: string): string {
-  const m: Record<string, string> = {
-    DeepSeek: 'DS', OpenAI: 'OA', 'Moonshot (Kimi)': 'KM',
-    'Zhipu (GLM)': 'GL', MiniMax: 'MM', 'ByteDance (Doubao)': 'BD',
-    SiliconFlow: 'SF', OpenRouter: 'OR', Groq: 'GQ',
-  };
-  return m[vendor] || vendor.slice(0, 2).toUpperCase();
+/** Map vendor key to its @lobehub/icons brand component. The .Avatar sub-
+ *  component renders the official logo inside a colored rounded tile. */
+const VENDOR_ICON: Record<string, { Icon: any; useCircle: boolean; bg?: string }> = {
+  DeepSeek:    { Icon: DeepSeek, useCircle: true },
+  OpenAI:      { Icon: OpenAI,   useCircle: true },
+  'Moonshot (Kimi)': { Icon: Kimi, useCircle: true },
+  Moonshot:    { Icon: Moonshot, useCircle: true },
+  'Zhipu (GLM)': { Icon: Zhipu, useCircle: true },
+  SiliconFlow: { Icon: SiliconCloud, useCircle: true },
+  OpenRouter:  { Icon: OpenRouter, useCircle: true },
+  Groq:        { Icon: Groq, useCircle: true },
+  'ByteDance (Doubao)': { Icon: Doubao, useCircle: true },
+};
+
+function renderVendorLogo(vendor: string) {
+  const entry = VENDOR_ICON[vendor];
+  if (entry) {
+    const { Icon, useCircle } = entry;
+    // Square Avatar mirrors the white-tile look from before so the brand
+    // colors stay readable on dark surface. Circle is the canonical shape
+    // used by lobehub docs and matches the original Material 3 spec.
+    return (
+      <div className={`vendor-badge ${useCircle ? '' : 'badge-white-bg'}`}>
+        <Icon.Avatar size={48} shape={useCircle ? 'circle' : 'square'} />
+      </div>
+    );
+  }
+  const initials = vendor.slice(0, 2).toUpperCase();
+  return (
+    <div className="vendor-badge">
+      <span>{initials}</span>
+    </div>
+  );
 }
 
-export function ProviderCard({ provider, isActive, testResult, onApply, onSettings, onTest, onDelete, onModelPicked, onToggleThinking, onSetEffort }: Props) {
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const TuneIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="21" x2="4" y2="14" />
+    <line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" />
+    <line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="1" y1="14" x2="7" y2="14" />
+    <line x1="9" y1="8" x2="15" y2="8" />
+    <line x1="17" y1="16" x2="23" y2="16" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
+export function ProviderCard({
+  provider,
+  isActive,
+  testResult,
+  onApply,
+  onSettings,
+  onTest,
+  onDelete,
+  onModelPicked,
+  onToggleThinking,
+  onSetEffort,
+}: Props) {
   const { t } = useTranslation();
   const vendor = guessVendor(provider.baseUrl);
   const [models, setModels] = useState<ModelState>({ loading: false, open: false, models: [] });
@@ -95,50 +174,44 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
 
   return (
     <div className="provider-card-wrapper" ref={wrapperRef}>
-      <div className={`provider-card ${isActive ? 'active' : ''}`}>
+      <motion.div
+        className={`provider-card ${isActive ? 'active' : ''}`}
+        whileHover={{ scale: 1.005 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+      >
         <div className="card-left">
-          <div className={`vendor-badge badge-${slug(vendor)}`}>{vendorTag(vendor)}</div>
+          {renderVendorLogo(vendor)}
           <div className="card-info">
             <div className="card-name-row">
               <span className="card-name">{provider.name}</span>
               {isActive && <span className="card-active-tag">{t('provider.status.active')}</span>}
-              {provider.thinkingEnabled && <span className="card-thinking-tag">{t('provider.status.thinking')}</span>}
-            </div>
-            <div className="card-detail">
               <button
                 className="card-model-button"
                 onClick={handleFetchModels}
                 title={t('provider.tooltips.model')}
+                style={{ marginLeft: '4px' }}
               >
-                <span className="mono">{provider.model}</span>
-                <span className="card-model-chevron">{models.open ? '▴' : '▾'}</span>
+                <span>{provider.model}</span>
+                <span className="card-model-chevron">{models.open ? '▲' : '▼'}</span>
               </button>
-              <span className="detail-sep">·</span>
-              <span className="mono">{provider.baseUrl.replace(/^https?:\/\//, '')}</span>
             </div>
+
             <div className="card-status">
-              {dot}
-              <span>{txt}</span>
-            </div>
-            <div className="card-controls">
-              <button
-                className={`control-chip ${provider.thinkingEnabled ? 'on' : ''}`}
-                onClick={() => onToggleThinking(!provider.thinkingEnabled)}
-                title={t('provider.tooltips.thinking')}
-              >
-                <span className="control-chip-dot" />
-                <span>Thinking</span>
-              </button>
-              <select
-                className="control-select"
-                value={provider.reasoningEffort}
-                disabled={!provider.thinkingEnabled}
-                onChange={(e) => onSetEffort(e.target.value as 'high' | 'max')}
-                title={t('provider.tooltips.reasoning')}
-              >
-                <option value="max">max</option>
-                <option value="high">high</option>
-              </select>
+              <div className="card-status-item">
+                {dot}
+                <span>{txt}</span>
+              </div>
+              <span className="detail-sep">·</span>
+              <div className="card-status-item">
+                <span className="status-dot" style={{ background: provider.thinkingEnabled ? 'var(--green)' : 'var(--text-muted)' }} />
+                <span>
+                  {provider.thinkingEnabled
+                    ? `${t('provider.status.thinking')} ${provider.reasoningEffort.toUpperCase()}`
+                    : `${t('provider.status.thinking')}已禁用`}
+                </span>
+              </div>
+              <span className="detail-sep">·</span>
+              <span className="mono card-url-text">{provider.baseUrl.replace(/^https?:\/\//, '')}</span>
             </div>
           </div>
         </div>
@@ -151,17 +224,33 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
           >
             {isActive ? t('provider.status.active') : t('provider.actions.activate')}
           </button>
-          <button className="card-btn icon-btn" onClick={onTest} disabled={testResult?.status === 'testing'} title={t('provider.tooltips.test')}>
-            {testResult?.status === 'testing' ? '⏳' : '🔍'}
+          
+          <button
+            className="card-btn icon-btn"
+            onClick={onTest}
+            disabled={testResult?.status === 'testing'}
+            title={t('provider.tooltips.test')}
+          >
+            {testResult?.status === 'testing' ? '⏳' : <SearchIcon />}
           </button>
-          <button className="card-btn icon-btn" onClick={onSettings} title={t('provider.tooltips.settings')}>
-            ⚙
+          
+          <button
+            className="card-btn icon-btn"
+            onClick={onSettings}
+            title={t('provider.tooltips.settings')}
+          >
+            <TuneIcon />
           </button>
-          <button className="card-btn icon-btn danger" onClick={onDelete} title={t('provider.tooltips.delete')}>
-            🗑
+          
+          <button
+            className="card-btn icon-btn danger"
+            onClick={onDelete}
+            title={t('provider.tooltips.delete')}
+          >
+            <TrashIcon />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {models.open && (
         <div className="model-dropdown">
@@ -191,10 +280,6 @@ export function ProviderCard({ provider, isActive, testResult, onApply, onSettin
       )}
     </div>
   );
-}
-
-function slug(s: string): string {
-  return s.toLowerCase().replace(/[^a-z]/g, '');
 }
 
 function guessVendor(baseUrl: string): string {
