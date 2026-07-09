@@ -597,8 +597,8 @@ fn format_active_label(p: &ProviderConfig, cache: &HashMap<String, (bool, u64)>,
 
 fn load_tray_icon(app_handle: &tauri::AppHandle) -> Option<tauri::image::Image<'_>> {
     let paths = [
-        app_handle.path().resource_dir().unwrap_or_default().join("public").join("icons").join("deepseek-tray-template.png"),
-        std::env::current_dir().unwrap_or_default().join("public").join("icons").join("deepseek-tray-template.png"),
+        app_handle.path().resource_dir().unwrap_or_default().join("public").join("icons").join("tray-template.png"),
+        std::env::current_dir().unwrap_or_default().join("public").join("icons").join("tray-template.png"),
     ];
 
     for path in &paths {
