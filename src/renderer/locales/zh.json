@@ -34,7 +34,8 @@
       "error": "异常",
       "active": "已激活",
       "max": "MAX",
-      "thinking": "思考"
+      "thinking": "思考",
+      "thinkingOff": "思考已禁用"
     },
     "actions": {
       "activate": "启用",

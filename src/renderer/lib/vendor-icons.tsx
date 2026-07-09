@@ -35,8 +35,15 @@ export type Vendor =
   | 'MiniMax'
   | 'Qwen';
 
-/** Vendor → lobehub icon component. The .Avatar sub-component renders
- *  the official white glyph against the vendor's brand-colored tile. */
+/** Vendor → lobehub icon component. The .Avatar sub-component paints
+ *  the official white glyph on the vendor's brand-colored tile and
+ *  ships with a circular "Center" wrapper for consistent padding.
+ *
+ *  Side note: .Avatar transitively pulls in @lobehub/ui, antd, and
+ *  @lobehub/fluent-emoji — these are all on the dependency tree
+ *  because lobehub's "Center" wrapper needs them. The bundle is
+ *  ~700KB unminified (~150KB gzip) but that's the cost of using
+ *  the canonical lobehub Avatar instead of CDN URLs. */
 export const VENDOR_ICONS: Record<Vendor, { Icon: any }> = {
   'DeepSeek':           { Icon: DeepSeek },
   'OpenAI':             { Icon: OpenAI },
@@ -54,7 +61,7 @@ export const VENDOR_ICONS: Record<Vendor, { Icon: any }> = {
 /** Vendor → preset id map. PresetSelector's icon lookup keys on preset
  *  id (not vendor string) because the same vendor can ship multiple
  *  presets (e.g. DeepSeek V4 Pro / Flash / R1 → all resolve to the same
- *  DeepSeek icon). */
+ *  DeepSeek icon). Uses .Color (see VENDOR_ICONS comment for rationale). */
 export const PRESET_ICONS: Record<string, { Icon: any }> = {
   'deepseek-v4-pro':   { Icon: DeepSeek },
   'deepseek-v4-flash':  { Icon: DeepSeek },

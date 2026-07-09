@@ -1,5 +1,3 @@
-import { ProviderPreset } from './presets';
-
 export interface TestResult {
   ok: boolean;
   latencyMs: number;
@@ -71,24 +69,6 @@ export async function testProviderConnection(
       return { ok: false, latencyMs, error: '连接超时 (8s)', model };
     }
     return { ok: false, latencyMs, error: err.message || '连接失败', model };
-  }
-}
-
-/**
- * Quick health check — just validate the endpoint is reachable.
- */
-export async function quickHealthCheck(baseUrl: string): Promise<{ ok: boolean; latencyMs: number }> {
-  const start = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const response = await fetch(`${normalizeUrl(baseUrl)}/v1/models`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    return { ok: response.ok, latencyMs: Date.now() - start };
-  } catch {
-    return { ok: false, latencyMs: Date.now() - start };
   }
 }
 

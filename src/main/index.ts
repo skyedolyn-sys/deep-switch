@@ -35,9 +35,6 @@ const PACKAGED_LOCALES: Record<string, Record<string, any>> = {
   en: loadLocale('en'),
 };
 
-const DEEPCODE_CONFIG = `${os.homedir()}/.deepcode/settings.json`;
-
-// TODO: 替换为 Deep Switch 官网 URL (用户后续提供)
 const OFFICIAL_SITE_URL = 'https://deepseek.com';
 
 let mainWindow: BrowserWindow | null = null;

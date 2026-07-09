@@ -189,7 +189,7 @@ export function ProviderCard({
                 <span>
                   {provider.thinkingEnabled
                     ? `${t('provider.status.thinking')} ${provider.reasoningEffort.toUpperCase()}`
-                    : `${t('provider.status.thinking')}已禁用`}
+                    : t('provider.status.thinkingOff')}
                 </span>
               </div>
               <span className="detail-sep">·</span>

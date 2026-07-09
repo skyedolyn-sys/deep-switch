@@ -149,7 +149,7 @@ export default function App() {
       (p) =>
         p.baseUrl === current.baseUrl &&
         p.model === current.model &&
-        (current.apiKey.length === 0 || p.apiKey === '••••••••' || true)
+        (current.apiKey.length === 0 || p.apiKey === '••••••••')
     );
     if (matched) {
       await handleApply(matched.id);
@@ -385,18 +385,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function guessVendorFromUrl(baseUrl: string): string {
-  const url = baseUrl.toLowerCase();
-  if (url.includes('deepseek')) return 'DeepSeek';
-  if (url.includes('openai')) return 'OpenAI';
-  if (url.includes('moonshot') || url.includes('kimi')) return 'Moonshot (Kimi)';
-  if (url.includes('bigmodel') || url.includes('z.ai')) return 'Zhipu (GLM)';
-  if (url.includes('minimax') || url.includes('minimaxi')) return 'MiniMax';
-  if (url.includes('volces')) return 'ByteDance (Doubao)';
-  if (url.includes('siliconflow')) return 'SiliconFlow';
-  if (url.includes('openrouter')) return 'OpenRouter';
-  if (url.includes('groq')) return 'Groq';
-  return 'Custom';
 }

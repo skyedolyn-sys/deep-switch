@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 export function Sparkle() {
   return (
     <motion.div
-      className="absolute bottom-12 right-12 pointer-events-none z-0 text-[#1a1a1e]"
+      className="absolute bottom-12 right-12 pointer-events-none z-0 text-white/30"
       style={{ width: 44, height: 44 }}
       animate={{
         rotate: 360,

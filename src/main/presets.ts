@@ -217,16 +217,3 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     hintEn: 'Next step will ask for full details',
   },
 ];
-
-export function getPreset(id: string): ProviderPreset | undefined {
-  return BUILTIN_PRESETS.find((p) => p.id === id);
-}
-
-export function getOpenAIPresets(): ProviderPreset[] {
-  return BUILTIN_PRESETS.filter((p) => p.apiFormat === 'openai');
-}
-
-/** Display name shown in the PresetSelector card (vendor + suffix, no model). */
-export function presetDisplayName(p: ProviderPreset): string {
-  return p.name + (p.cardSuffix ?? '');
-}

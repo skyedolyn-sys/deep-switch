@@ -34,7 +34,8 @@
       "error": "Error",
       "active": "Active",
       "max": "MAX",
-      "thinking": "Think"
+      "thinking": "Think",
+      "thinkingOff": "Thinking off"
     },
     "actions": {
       "activate": "Enable",

@@ -127,7 +127,7 @@ const kimi: QuotaFetcher = {
 
 // ─── Registry ────────────────────────────────────────────────────
 
-export const QUOTA_FETCHERS: QuotaFetcher[] = [deepseek, openrouter, minimax, zhipu, kimi];
+const QUOTA_FETCHERS: QuotaFetcher[] = [deepseek, openrouter, minimax, zhipu, kimi];
 
 // ─── Cache ───────────────────────────────────────────────────────
 
