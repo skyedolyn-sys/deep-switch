@@ -1,6 +1,7 @@
 # Deep Switch
 
-> **Deep Code** CLI の AI プロバイダをワンクリックで切り替え。秒単位で完了。設定ファイルを編集する必要なし、再起動もなし。
+> ワンクリックで **Deep Code** CLI の AI プロバイダーを切り替えるメニューバー / Dock ユーティリティ。
+> 設定ファイルを開く必要なし。再起動も不要。秒単位で切り替え。
 
 ---
 
@@ -10,28 +11,28 @@
 
 | プラットフォーム | ダウンロード | サイズ |
 |---|---|---|
-| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned.dmg) | ~183 MB |
-| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned-mac.zip) | ~176 MB |
-| Linux / Windows | [ソースからビルド](#開発) | — |
+| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
+| macOS (Intel) | ソースからビルド | — |
+| Linux / Windows | ソースからビルド | — |
 
-> ⚠️ **このビルドは署名・公証されていません。** 初回起動時に macOS は *「"Deep Switch" は破損しているため開けません」* を表示します。回避手順:
+> ⚠️ **ビルドは未署名・未公証です。** 初回起動時、macOS は *"Deep Switch は壊れているため開けません"* と表示します。回避方法:
 > 1. DMG を開き、**Deep Switch** を `/Applications` にドラッグします。
-> 2. **Finder** で `/Applications` を開き、**Deep Switch** を右クリック → **開く** → ダイアログで確認します。
-> 3. 以降は通常のダブルクリックで起動できます。
+> 2. **Finder** で `/Applications` に移動し、**Deep Switch** を右クリック → **開く** → ダイアログで確認。
+> 3. 以降はダブルクリックで通常通り起動します。
 >
-> ターミナルからの方法: `sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
+> コマンドライン:`sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
 >
-> Apple Developer ID を取得でき次第、署名・公証版へ移行します。それまでは上記の方法をご利用ください。
+> Apple Developer ID を取得後、署名 + 公証版に切り替えます。それまでは上記の回避策をお使いください。
 
 ---
 
 ## 言語 / Languages
 
 - [English](../README.md)
-- [简体中文](./README.zh-CN.md)
-- [繁體中文](./README.zh-TW.md)
-- [日本語](./README.ja.md)
-- [한국어](./README.ko.md)
+- [简体中文](../README.zh-CN.md)
+- [繁體中文](../README.zh-TW.md)
+- [日本語](../README.ja.md)
+- [한국어](../README.ko.md)
 
 ---
 
@@ -46,12 +47,13 @@
 ╚═════╝ ╚══════╝╚══════╝╚═╝         ╚══════╝ ╚══╝╚══╝ ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝
 ```
 
-**Deep Code CLI 向けプロバイダ切替ツール ── あなたの働き方に本気で寄り添います。**
+**Deep Code CLI のプロバイダー切り替えツール —— 実際の業務フローに合わせて設計。**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)](#インストール)
-[![Electron](https://img.shields.io/badge/electron-28-9feaf9)](https://www.electronjs.org)
+[![Tauri 2](https://img.shields.io/badge/tauri-2-FFC131)](https://tauri.app)
 [![React](https://img.shields.io/badge/react-18-61dafb)](https://react.dev)
+[![Rust](https://img.shields.io/badge/rust-stable-orange)](https://www.rust-lang.org)
 
 </div>
 
@@ -59,40 +61,39 @@
 
 ## Deep Switch とは?
 
-Deep Switch は、macOS のメニューバー / Dock に常駐する小さなユーティリティ(Linux / Windows ではシステムトレイ)です。`~/.deepcode/settings.json` を書き換えることで、**Deep Code** CLI が次に使う AI プロバイダを即座に切り替えます。一度登録すれば、JSON ファイルを開かなくてもワンクリックで切替完了。
+Deep Switch は `~/.deepcode/settings.json` を編集するだけの小さなメニューバー / Dock ユーティリティです(macOS 向け。Linux / Windows ではシステムトレイユーティリティ)。**Deep Code** CLI が今どの AI プロバイダーと会話しているかを、ワンクリックで切り替えられるようにします。一度プロバイダーを登録すれば、JSON ファイルを開くことなく切り替えできます。
 
-Deep Code の **ための** ミラーリング / 入れ替えユーティリティであり、Deep Code 本体には一切手を加えません。あくまで CLI が次に読み込む設定だけを書き換えます。
+Deep Code の代替品ではなく、**Deep Code のための** ミラー / 互換ツールです:Deep Code 本体には触れず、CLI が次回読み取る設定ファイルだけを書き換えます。
 
 ---
 
-## なぜ必要?
+## なぜ?
 
-多くのプロバイダを扱うのが、こんなに面倒であるべきはずがありません。
+複数のプロバイダーを渡り歩くのに、こんなに苦労するべきではありません。
 
-- 🧩 **プロバイダが多すぎ、鍵が多すぎ** ── DeepSeek、Moonshot、Zhipu GLM、MiniMax、ByteDance Doubao、SiliconFlow、OpenRouter、OpenAI、Groq……それぞれに異なる Base URL、モデル名、癖があります。
-- 📝 **`settings.json` を手作業で編集** ── キーの一文字を打ち間違える、カンマを忘れるだけで JSON が壊れます。
-- 🐢 **切替が遅い** ── CLI を終了し、ファイルを編集し、再起動し、待ち、また同じことの繰り返し。
-- 💾 **バックアップ状態が失われやすい** ── 上書きしてしまえば、元の設定は二度と戻せません。
-- 🔁 **繰り返しの作業** ── 新しいプロジェクトを始めるたびに同じ儀式。
+- 🧩 **プロバイダーが多すぎ、鍵が多すぎ** — DeepSeek、Moonshot、Zhipu GLM、MiniMax、ByteDance Doubao、SiliconFlow、OpenRouter、OpenAI、Groq……それぞれに独自の Base URL、モデル名、癖があります。
+- 📝 **`settings.json` の手作業編集** — 1 文字打ち間違えたり、カンマを忘れただけで JSON が壊れます。
+- 🐢 **切り替えが遅い** — CLI を終了して、ファイルを編集して、再起動して、待って、の繰り返し。
+- 💾 **バックアップが消える** — 上書きしてしまえば、前の設定はもう戻せません。
+- 🔁 **繰り返し作業** — 新しいプロジェクトごとに同じことをやり直す。
 
-Deep Switch は、これらすべてをワンクリックにまとめます。
+Deep Switch はこれをすべてワンクリックに集約します。
 
 ---
 
 ## 機能
 
-- ⚡ **ワンクリック有効化** ── プロバイダを選んで *有効化* を押すだけ。
-- 📦 **プリセット網羅** ── DeepSeek · Moonshot/Kimi · Zhipu GLM · MiniMax · ByteDance Doubao · SiliconFlow · OpenRouter · OpenAI · Groq、そして自由に設定できる *カスタム* スロット。
-- 🔄 **ライブ適用** ── `~/.deepcode/settings.json` を直接書き換えます。次回の CLI 呼び出しからすでに新しいプロバイダに繋がります。**再起動不要。**
-- 🧠 **モデルピッカー** ── プロバイダの `/v1/models` エンドポイントからモデル一覧をライブ取得。実際に提供されている中から選べます。
-- 🤔 **思考モード切替** ── チェーン・オブ・ソートを有効化し、推論深度を `high`(高)または `max`(最高)から選択。
-- 🌐 **バイリンガル UI** ── 日本語と英語、システムのロケールを自動検出、手動オーバーライドも対応。
-- 📌 **トレイメニューからのクイック切替** ── トレイアイコンを右クリックすれば、メインウィンドウを開かずにプロバイダを切り替え。表示言語は UI 言語に追従。
-- 🪄 **初回「現在の設定を検出」インポート** ── Deep Code が現在使っている設定をそのまま取り込み、保存可能なプロバイダとして 1 クリックで登録。
-- 🔒 **資格情報はローカル保存のみ** ── `~/.deep-switch/config.json` に保存。アップロードも同期もロギングも一切なし。
-- 🛟 **バックアップと復元** ── 書き換えるたびに前のファイルをスナップショット。切替を誤っても 1 クリックで戻せます。
-- 🎯 **ヘルスチェック** ── プロバイダの Base URL を軽量にプローブし、CLI より先に「繋がるか」をお知らせ。
-- 🪶 **軽量** ── トレイアイコン 1 つだけ。常駐デーモンも、不要に膨らんだエンジンもなし。
+- ⚡ **ワンクリック有効化** — プロバイダーを選んで *有効化* を押すだけ。
+- 📦 **プリセット網羅** — DeepSeek · Moonshot/Kimi · Zhipu GLM · MiniMax · ByteDance Doubao · SiliconFlow · OpenRouter · OpenAI · Groq、そして完全にカスタマイズ可能な *Custom* スロット。
+- 🔄 **リアルタイム反映** — `~/.deepcode/settings.json` を直接書き換えます。次に CLI を呼ぶ時点で既に新しいプロバイダーに切り替わっています。**再起動不要。**
+- 🧠 **モデルピッカー** — プロバイダーの `/v1/models` エンドポイントからリアルタイムにモデル一覧を取得し、実際に利用可能なものだけ選べます。
+- 🤔 **思考モード切替** — Chain-of-thought を有効化し、推論の深さ `high` / `max` を選べます。
+- 🌐 **バイリンガル UI** — 日本語と英語、システムロケール自動検出 + 手動オーバーライド。
+- 📌 **トレイメニューで即時切替** — トレイアイコンを右クリックでメインウィンドウを開かずに切替。メニュー表記は UI 言語に追従。
+- 🪄 **初回「現在の設定を検出」インポート** — Deep Code が今何を指しているかを読み取り、ワンクリックで保存可能なプロバイダーに。
+- 🔒 **認証情報はローカル保存** — `~/.deep-switch/config.json` にのみ。アップロードも同期もログ保存もなし。
+- 🎯 **ヘルスチェック** — 任意の軽量 Base URL チェック。CLI がエラーを出す前に分かります。
+- 🪶 **軽量** — 単一トレイアイコン、システム WebView、ディスク約 12 MB。Chromium 同梱なし、バックグラウンド常駐なし。
 
 ---
 
@@ -100,30 +101,29 @@ Deep Switch は、これらすべてをワンクリックにまとめます。
 
 ```
 ┌──────────────────┐        ┌────────────────────────┐        ┌──────────────────────┐
-│  プリセット/      │  ───▶  │  メインウィンドウまたは   │  ───▶  │  ~/.deepcode/        │
-│  カスタム         │        │  トレイメニューで          │        │  settings.json       │
-│  プロバイダ一覧   │        │  「有効化」をクリック      │        │  がメインプロセスで    │
-│  (DeepSeek、      │        │                        │        │  ディスクに書き込まれる│
-│  Moonshot…)       │        │                        │        │                      │
+│  プリセット/       │  ───▶  │  メインウィンドウか      │  ───▶  │  ~/.deepcode/        │
+│  カスタム入力     │        │  トレイメニューで        │        │  settings.json       │
+│  (DeepSeek,      │        │  「有効化」をクリック     │        │  が Rust メイン      │
+│  Moonshot, …)    │        │                        │        │  プロセスから書き換え │
 └──────────────────┘        └────────────────────────┘        └──────────┬───────────┘
                                                                         │
                                                                         ▼
                                                             ┌──────────────────────────┐
-                                                            │  Deep Code CLI の次の      │
-                                                            │  呼び出し時に新しい         │
-                                                            │  settings を読み込み、     │
-                                                            │  選択したプロバイダに繋がる │
+                                                            │  次の Deep Code CLI 呼び出しが │
+                                                            │  新しい settings を読み、   │
+                                                            │  切り替わったプロバイダーと │
+                                                            │  通信する。                │
                                                             └──────────────────────────┘
 ```
 
-流れは 4 ステップだけ:
+4 ステップ:
 
-1. プロバイダを **追加** (プリセットを選ぶか、Base URL + Key を貼り付ける)。
-2. メインウィンドウまたはトレイメニューから **有効化**。
-3. Deep Switch のメインプロセスが新しい `settings.json` をディスクに書き込む。
-4. 次回 Deep Code CLI を呼び出すと、今保存したばかりのファイルが読み込まれる。
+1. プロバイダーを **追加** (プリセットを選ぶか Base URL + Key を貼る)
+2. メインウィンドウかトレイメニューから **有効化** をクリック
+3. Deep Switch が Tauri Rust メインプロセス経由で `settings.json` を書き換え
+4. 次に Deep Code CLI を呼ぶと、書き換えた設定が読まれる
 
-これでループ完了です。
+これで完了です。
 
 ---
 
@@ -131,78 +131,64 @@ Deep Switch は、これらすべてをワンクリックにまとめます。
 
 ### macOS(推奨)
 
-#### Homebrew(おすすめ)
+[Releases](../../releases) ページから最新の `.dmg` をダウンロードし、**Deep Switch** を Applications フォルダにドラッグします。
 
-```bash
-brew install --cask deep-switch
-```
+> ビルドが未署名のため、DMG から初回起動時に Gatekeeper の警告が出ます。右クリック → *開く* で許可してください。
 
-#### 直接ダウンロード
+### Linux と Windows
 
-[Releases](../../releases) ページから最新の `.dmg` または `.zip` を入手し、**Deep Switch** を「アプリケーション」フォルダにドラッグしてください。
-
-> ビルドが未署名のため、DMG から初回起動する際に右クリック → *開く* で Gatekeeper の確認を通過させる必要がある場合があります。
-
-### Linux / Windows
-
-公式インストーラはまだ用意されていませんが、ソースから実行できます:
+公式インストーラはまだですが、ソースから動かせます:
 
 ```bash
 git clone https://github.com/skyedolyn-sys/deep-switch.git
 cd deep-switch
 npm install
-npm run dev
+npm run tauri dev
 ```
-
-バイナリを自分でパッケージしたい場合は、下記の[開発](#開発)セクションの `npm run dist` を参照してください。
 
 ---
 
 ## 開発
 
-要件:**Node.js 18 以上**、**npm 9 以上**。
+要件:**Node.js 20+** および **Rust 1.77+**(Tauri 2 ツールチェーン)。
 
 ```bash
 # クローン
 git clone https://github.com/skyedolyn-sys/deep-switch.git
 cd deep-switch
 
-# 依存をインストール(リポジトリ同梱の lockfile を使用)
+# 依存インストール(リポジトリの lockfile を使用)
 npm install
 
-# 開発モード ── Vite + Electron を並列起動、HMR 付き
-npm run dev
+# 開発モード — Vite + Tauri + HMR
+npm run tauri dev
+# レンダラーのみ(ブラウザプレビュー、Tauri なし):
+npm run dev:renderer
 
-# メインプロセスの型チェック + ビルド
-npm run build:main
+# レンダラーの型チェック
+npx tsc --noEmit
 
-# レンダラーの型チェック + ビルド
-npm run build:renderer
-
-# 本番ビルド一式
-npm run build
-
-# 現在プラットフォーム向けバイナリをパッケージ
-npm run dist
+# 現在プラットフォームの本番ビルド
+npm run tauri build
 
 # Lint
 npm run lint
 ```
 
-`npm run dev` は Vite を `http://localhost:5173` で起動し、Electron がそこへ向くように立ち上がります。レンダラーは HMR で更新され、メインプロセスは TypeScript ファイル変更時に素早く再起動します。
+`npm run tauri dev` は Vite を `http://localhost:5173` で起動し、Tauri WebView ウィンドウから開きます。レンダラーは HMR、`src-tauri/src/**` 変更時は Rust が自動再コンパイル。
 
 ---
 
 ## 技術スタック
 
-| レイヤ          | 採用技術                                          |
+| レイヤー        | ツール                                            |
 | --------------- | ------------------------------------------------- |
-| シェル          | **Electron 28**                                  |
-| レンダラー      | **React 18** + **TypeScript 5**                  |
-| バンドラ(web)   | **Vite 5**                                       |
-| バンドラ(app)   | **electron-builder 24**                          |
-| 国際化          | **i18next** + `i18next-browser-languagedetector` |
-| ローカル保存    | `electron-store`(OS のキーチェーンが使える環境では暗号化) |
+| シェル          | **Tauri 2**(システム WebView を使用)              |
+| レンダラー      | **React 18** + **TypeScript 5** + **Vite 5**     |
+| ネイティブ     | **Rust 1.77+**(serde, reqwest, tauri-plugin-log)  |
+| i18n           | **i18next** + `i18next-browser-languagedetector` |
+| ベンダーアイコン | **@lobehub/icons**(オープンソース SVG ブランドパック) |
+| ローカル保存    | `~/.deep-switch/config.json`(JSON、アトミック書き込み) |
 | 永続化          | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` |
 
 ---
@@ -212,54 +198,53 @@ npm run lint
 ```
 deep-switch/
 ├── src/
-│   ├── main/                   # Electron メインプロセス
-│   │   ├── index.ts            # アプリ & トレイ起動
-│   │   ├── presets.ts          # 内蔵プロバイダプリセット
-│   │   ├── provider-manager.ts # ユーザープロバイダの CRUD
-│   │   ├── vendors.ts          # ベンダー情報
-│   │   ├── health-check.ts     # 任意の Base URL プローブ
-│   │   └── quota.ts            # クォータのスナップショット
-│   ├── preload/                # contextBridge 公開面
 │   └── renderer/               # React UI
 │       ├── App.tsx
-│       ├── components/
+│       ├── components/         # ProviderCard、PresetSelector、ProviderDetail など
+│       ├── lib/                # vendor-icons.tsx(共有モジュール)
 │       ├── locales/            # en.json、zh.json
 │       ├── i18n.ts
 │       └── global.css
-├── build/                      # アプリアイコン
-├── public/                     # 静的アセット
-├── scripts/                    # 補助スクリプト
-├── docs/                       # 多言語 & 追加ドキュメント
-├── electron-builder 設定は      # package.json → "build"
-├── tsconfig.json               # レンダラー TS 設定
-├── tsconfig.main.json          # メインプロセス TS 設定
-└── vite.config.ts
+├── src-tauri/                   # Tauri Rust バックエンド
+│   ├── src/
+│   │   ├── main.rs             # Tauri エントリ
+│   │   └── lib.rs              # 15 個の #[tauri::command] IPC + トレイ + DB
+│   ├── icons/                   # アプリアイコンセット
+│   ├── capabilities/           # Tauri セキュリティポリシー
+│   ├── tauri.conf.json         # ウィンドウ設定、identifier、bundle 設定
+│   └── Cargo.toml
+├── public/                      # 静的アセット(トレイアイコンなど)
+├── docs/                        # 多言語ドキュメント
+├── .github/workflows/           # CI + リリース
+│   ├── ci.yml
+│   └── release.yml
+├── tsconfig.json                # レンダラー TS 設定
+└── vite.config.mts
 ```
 
 ---
 
 ## コントリビュート
 
-PR 大歓迎 ── テーマを絞ってください。
+PR 大歓迎 — テーマを絞ってください。
 
-1. リポジトリをフォークし、トピックブランチを作成(`feat/<short-name>`、`fix/<short-name>`)。
-2. プッシュ前に `npm run lint` と `npm run build` を実行。
-3. PR では *何を* 変えたかではなく **なぜ** 変えたかを説明してください。
+1. リポジトリをフォークしてトピックブランチを作成(`feat/<short-name>`、`fix/<short-name>`)。
+2. プッシュ前に `npm run lint` と `npx tsc --noEmit` を実行。
+3. PR は *何を* 変えたかだけでなく、**なぜ** 変えたかを説明する。
 
-プロバイダプリセットを追加する場合は `src/main/presets.ts` を編集し、`description` / `descriptionEn`(および platform、hint)の日本語・英語版を揃えてください。
-翻訳を追加する場合は `src/renderer/locales/en.json` と `src/renderer/locales/zh.json` を同時に編集し、key を完全一致させてください。
+**プロバイダープリセットを追加** する場合、`src-tauri/src/lib.rs` の `get_builtin_presets` を編集 — `description` / `descriptionEn`(および platform、hint、homepageUrl)は両言語で同期させてください。
+**翻訳を追加** する場合、`src/renderer/locales/en.json` と `src/renderer/locales/zh.json` を同期して編集し、キーが完全に一致するようにしてください。
 
 ---
 
 ## セキュリティとプライバシー
 
-- 🔐 **API キーは `~/.deep-switch/config.json` にローカル保存**。外部へは一切送信しません。私たち側の「私たち」は存在しません ── Deep Switch にバックエンドはありません。
-- 🚫 **アナリティクス、テレメトリ、クラッシュレポートなし**。第三者スクリプトの埋め込みや、リモート設定の取得も行いません。
-- 🌐 **Deep Switch 自身が発する通信は**、モデルピッカー使用時の任意の `/v1/models` 取得と任意のヘルスチェックだけ ── どちらもあなたのマシンから、選んだプロバイダへ直接届きます。
-- 🧪 **オープンソース** ── あなたのマシンで動作するすべてのバイトが、このリポジトリにあります。自由に監査してください。
-- 🧯 **自動バックアップ** ── `~/.deepcode/settings.json` を書き換えるたびに、必ずひとつ前のスナップショットを取ります。誤操作からも 1 クリックで戻れます。
+- 🔐 **API キーは `~/.deep-switch/config.json` にローカル保存** — あなたのマシンから一切出ません。Deep Switch にはバックエンドがなく「私たち」も存在しません。
+- 🚫 **分析・テレメトリ・クラッシュレポートなし** — サードパーティスクリプトなし、リモート設定フェッチなし。
+- 🌐 **Deep Switch 自身が発生するネットワークトラフィック** は、モデルピッカーを開いたときの任意の `/v1/models` 取得と任意のヘルスチェックのみ — どちらもあなたのマシンから直接選んだプロバイダーへ。
+- 🧪 **オープンソース** — あなたのマシンで動く全バイトがこのリポジトリにあります。自由に監査してください。
 
-セキュリティ上の問題を見つけた場合は、公開 issue ではなく private advisory でご報告ください。
+セキュリティ問題を見つけた場合は、公開 issue ではなく非公開セキュリティレポートで報告してください。
 
 ---
 
@@ -271,4 +256,4 @@ PR 大歓迎 ── テーマを絞ってください。
 
 ## 謝辞
 
-このアプリがルーティングしている API を提供してくれているプロバイダ各位 ── **DeepSeek、Moonshot / Kimi、Zhipu GLM、MiniMax、ByteDance Doubao、SiliconFlow、OpenRouter、OpenAI、Groq** ── そして Electron、React、Vite、i18next のメンテナに深く感謝します。彼らの仕事があってこそ、このアプリはシンプルに作れます。
+API を提供してくれているプロバイダーに感謝——**DeepSeek、Moonshot / Kimi、Zhipu GLM、MiniMax、ByteDance Doubao、SiliconFlow、OpenRouter、OpenAI、Groq**——そして Tauri、React、Vite、Rust、i18next のメンテナたちに。皆さんの仕事があってこそ、このアプリは簡単に作れます。

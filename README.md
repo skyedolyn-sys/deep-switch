@@ -11,9 +11,9 @@
 
 | Platform | Download | Size |
 |---|---|---|
-| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned.dmg`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned.dmg) | ~201 MB |
-| macOS (Apple Silicon) | [`Deep.Switch-0.1.0-arm64-resigned-mac.zip`](../../releases/download/v0.1.0/Deep.Switch-0.1.0-arm64-resigned-mac.zip) | ~181 MB |
-| Linux / Windows | [Build from source](#development) | — |
+| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
+| macOS (Intel) | Build from source | — |
+| Linux / Windows | Build from source | — |
 
 > ⚠️ **The build is not signed or notarized.** macOS will show *"Deep Switch is damaged and can't be opened"* the first time. To bypass:
 > 1. Open the DMG, drag **Deep Switch** into `/Applications`.
@@ -51,8 +51,9 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)](#download)
-[![Electron](https://img.shields.io/badge/electron-28-9feaf9)](https://www.electronjs.org)
+[![Tauri 2](https://img.shields.io/badge/tauri-2-FFC131)](https://tauri.app)
 [![React](https://img.shields.io/badge/react-18-61dafb)](https://react.dev)
+[![Rust](https://img.shields.io/badge/rust-stable-orange)](https://www.rust-lang.org)
 [![Release](https://img.shields.io/github/v/release/skyedolyn-sys/deep-switch)](../../releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/skyedolyn-sys/deep-switch/ci.yml)](../../actions)
 
@@ -99,9 +100,8 @@ Deep Switch collapses all of that into a one-click action.
 - 📌 **Tray menu quick-switch** — right-click the tray icon to flip providers without opening the window; labels follow your UI language.
 - 🪄 **First-time "Detect current config" import** — reads whatever Deep Code is currently configured for and turns it into a saveable provider with one click.
 - 🔒 **Local-only credentials** — stored in `~/.deep-switch/config.json`. Never uploaded, never synced, never logged.
-- 🛟 **Backup & restore** — every change snapshots the previous file, so a bad switch is one click away from being undone.
 - 🎯 **Health checks** — optional lightweight probe of the provider's base URL so you know before the CLI does.
-- 🪶 **Lightweight** — single tray icon, no background daemon, no browser engine bloat beyond what Electron needs.
+- 🪶 **Lightweight** — single tray icon, system webview, ~12 MB on disk. No bundled Chromium, no background daemon.
 
 ---
 
@@ -128,7 +128,7 @@ Four steps, end to end:
 
 1. **Add** a provider (pick a preset or paste your own base URL + key).
 2. **Enable** it from the main window or the tray menu.
-3. Deep Switch writes the new `settings.json` on the main process side.
+3. Deep Switch writes the new `settings.json` via the Tauri Rust main process.
 4. The next time you call the Deep Code CLI, it loads the file you just saved.
 
 That's the whole loop.
@@ -139,15 +139,7 @@ That's the whole loop.
 
 ### macOS (recommended)
 
-#### Homebrew (preferred)
-
-```bash
-brew install --cask deep-switch
-```
-
-#### Direct download
-
-Grab the latest `.dmg` or `.zip` from the [Releases](../../releases) page and drag **Deep Switch** into your Applications folder.
+Download the latest `.dmg` from the [Releases](../../releases) page and drag **Deep Switch** into your Applications folder.
 
 > The first time you launch from the DMG, you may need to right-click → *Open* to clear the Gatekeeper prompt, since the build is unsigned.
 
@@ -159,45 +151,39 @@ There is no first-party installer for Linux or Windows yet — but the app runs 
 git clone https://github.com/skyedolyn-sys/deep-switch.git
 cd deep-switch
 npm install
-npm run dev
+npm run tauri dev
 ```
-
-For packaged binaries in the meantime, see `npm run dist` in the [Development](#development) section below.
 
 ---
 
 ## Development
 
-Requirements: **Node.js 18+** and **npm 9+**.
+Requirements: **Node.js 20+** and **Rust 1.77+** (Tauri 2 toolchain).
 
 ```bash
 # Clone
 git clone https://github.com/skyedolyn-sys/deep-switch.git
 cd deep-switch
 
-# Install deps (uses your local repo's lockfile)
+# Install JS deps (uses your local repo's lockfile)
 npm install
 
-# Dev mode — runs Vite + Electron concurrently with HMR
-npm run dev
+# Dev mode — runs Vite + Tauri with HMR
+npm run tauri dev
+# Or renderer-only (browser preview, no Tauri):
+npm run dev:renderer
 
-# Type-check & build the main process
-npm run build:main
+# Type-check (renderer)
+npx tsc --noEmit
 
-# Type-check & build the renderer
-npm run build:renderer
-
-# Full prod build
-npm run build
-
-# Package a binary for your current platform
-npm run dist
+# Production build for your platform
+npm run tauri build
 
 # Lint
 npm run lint
 ```
 
-`npm run dev` boots Vite on `http://localhost:5173` and starts Electron pointed at it — you get hot reload on the renderer and a fast restart for the main process whenever you change a TypeScript file.
+`npm run tauri dev` boots Vite on `http://localhost:5173` and launches a Tauri WebView window pointing at it — you get hot reload on the renderer and a Rust recompile whenever you change `src-tauri/src/**`.
 
 ---
 
@@ -205,12 +191,12 @@ npm run lint
 
 | Layer            | Tooling                                          |
 | ---------------- | ------------------------------------------------ |
-| Shell            | **Electron 28**                                  |
-| Renderer         | **React 18** + **TypeScript 5**                  |
-| Bundler (web)    | **Vite 5**                                       |
-| Bundler (app)    | **electron-builder 24**                          |
+| Shell            | **Tauri 2** (uses the system WebView)            |
+| Renderer         | **React 18** + **TypeScript 5** + **Vite 5**    |
+| Native backend   | **Rust 1.77+** (serde, reqwest, tauri-plugin-log) |
 | i18n             | **i18next** + `i18next-browser-languagedetector` |
-| Local store      | `electron-store` (encrypted at rest by OS keychain where available) |
+| Vendor icons     | **@lobehub/icons** (open-source SVG brand pack)  |
+| Local store      | `~/.deep-switch/config.json` (JSON, atomic write) |
 | Persistence      | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` |
 
 ---
@@ -220,28 +206,28 @@ npm run lint
 ```
 deep-switch/
 ├── src/
-│   ├── main/                   # Electron main process
-│   │   ├── index.ts            # App & tray boot
-│   │   ├── presets.ts          # Built-in provider presets
-│   │   ├── provider-manager.ts # CRUD for user providers
-│   │   ├── vendors.ts          # Vendor metadata
-│   │   ├── health-check.ts     # Optional base-URL probe
-│   │   └── quota.ts            # Quota snapshots
-│   ├── preload/                # contextBridge surface
 │   └── renderer/               # React UI
 │       ├── App.tsx
-│       ├── components/
+│       ├── components/         # ProviderCard, PresetSelector, ProviderDetail, …
+│       ├── lib/                # vendor-icons.tsx (shared module)
 │       ├── locales/            # en.json, zh.json
 │       ├── i18n.ts
 │       └── global.css
-├── build/                      # App icons
-├── public/                     # Static assets
-├── scripts/                    # Helper scripts
-├── docs/                       # Translations & extra docs
-├── electron-builder config in  # package.json → "build"
-├── tsconfig.json               # Renderer TS config
-├── tsconfig.main.json          # Main process TS config
-└── vite.config.ts
+├── src-tauri/                   # Tauri Rust backend
+│   ├── src/
+│   │   ├── main.rs             # Tauri entrypoint
+│   │   └── lib.rs              # 15 #[tauri::command] IPC + tray + db
+│   ├── icons/                   # App icon set
+│   ├── capabilities/           # Tauri security policy
+│   ├── tauri.conf.json         # Window config, identifier, bundle settings
+│   └── Cargo.toml
+├── public/                      # Static assets (tray icon, etc.)
+├── docs/                        # Translations & extra docs
+├── .github/workflows/           # CI + release
+│   ├── ci.yml
+│   └── release.yml
+├── tsconfig.json                # Renderer TS config
+└── vite.config.mts
 ```
 
 ---
@@ -251,10 +237,10 @@ deep-switch/
 PRs welcome — keep them focused.
 
 1. Fork the repo and create a topic branch (`feat/<short-name>`, `fix/<short-name>`).
-2. Run `npm run lint` and `npm run build` before pushing.
+2. Run `npm run lint` and `npx tsc --noEmit` before pushing.
 3. Open a PR describing the **why**, not just the *what*.
 
-When adding **provider presets**, edit `src/main/presets.ts` — keep the `description` / `descriptionEn` (and platform / hint) fields in sync for both locales.
+When adding **provider presets**, edit `src-tauri/src/lib.rs` (`get_builtin_presets`) — keep the `description` / `descriptionEn` (and platform / hint / homepageUrl) fields in sync for both locales.
 When adding **translations**, edit `src/renderer/locales/en.json` and `src/renderer/locales/zh.json` and make sure the keys match exactly.
 
 ---
@@ -265,7 +251,6 @@ When adding **translations**, edit `src/renderer/locales/en.json` and `src/rende
 - 🚫 **No analytics, no telemetry, no crash reporting.** No third-party scripts, no remote config fetches.
 - 🌐 **The only network traffic Deep Switch itself generates** is the optional `/v1/models` fetch when you open the model picker, and an optional health check — both go straight from your machine to the provider you picked.
 - 🧪 **Open-source** — every byte that runs on your machine is in this repo. Audit it.
-- 🧯 **Backups** — every settings write snapshots the previous `~/.deepcode/settings.json` so a bad switch is reversible.
 
 If you find a security issue, please open a private advisory instead of a public issue.
 
@@ -279,4 +264,4 @@ If you find a security issue, please open a private advisory instead of a public
 
 ## Acknowledgments
 
-Huge thanks to the providers whose APIs this app routes between — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq** — and to the maintainers of Electron, React, Vite and i18next whose work makes this app trivial to build.
+Huge thanks to the providers whose APIs this app routes between — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq** — and to the maintainers of Tauri, React, Vite, Rust and i18next whose work makes this app trivial to build.
