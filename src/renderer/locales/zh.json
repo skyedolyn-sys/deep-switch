@@ -150,9 +150,6 @@
     "providerSwitched": "✓ {{name}} 已切换 · {{baseUrl}} / {{model}}",
     "modelUpdatedActive": "✓ {{name}} 已切换到 {{model}}",
     "modelUpdated": "✓ 模型已更新为 {{model}}",
-    "thinkingEnabled": "✓ 已开启思考模式",
-    "thinkingDisabled": "✓ 已关闭思考模式",
-    "effortSet": "✓ 推理深度设为 {{effort}}",
     "configDetected": "✓ 检测到 Deep Code 当前配置，已应用对应 provider",
     "configImported": "✓ 已从 settings.json 导入并应用",
     "configCreated": "✓ 已创建 Deep Code 配置文件"

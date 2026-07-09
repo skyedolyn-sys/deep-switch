@@ -150,9 +150,6 @@
     "providerSwitched": "✓ {{name}} switched · {{baseUrl}} / {{model}}",
     "modelUpdatedActive": "✓ {{name}} switched to {{model}}",
     "modelUpdated": "✓ Model updated to {{model}}",
-    "thinkingEnabled": "✓ Thinking mode enabled",
-    "thinkingDisabled": "✓ Thinking mode disabled",
-    "effortSet": "✓ Reasoning effort set to {{effort}}",
     "configDetected": "✓ Detected current Deep Code config and applied matching provider",
     "configImported": "✓ Imported and applied from settings.json",
     "configCreated": "✓ Deep Code config file created"

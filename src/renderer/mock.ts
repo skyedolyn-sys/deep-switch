@@ -203,8 +203,6 @@ const DEFAULT_PROVIDERS: Provider[] = [
 export function setupBrowserMock() {
   if (typeof window === 'undefined' || (window as any).deepSwitch) return;
 
-  console.log('[Mock] Initializing browser mock layer for window.deepSwitch');
-
   // Helper storage keys
   const KEY_PROVIDERS = 'ds_mock_providers';
   const KEY_ACTIVE_ID = 'ds_mock_active_id';

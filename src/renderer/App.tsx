@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProviderCard } from './components/ProviderCard';
 import { ProviderDetail } from './components/ProviderDetail';
@@ -193,30 +193,6 @@ export default function App() {
     }
   };
 
-  const handleToggleThinking = async (id: string, enabled: boolean) => {
-    const full = await api.getProvider(id);
-    if (!full) return;
-    const updated = { ...full, thinkingEnabled: enabled };
-    const saved = await api.saveProvider(updated);
-    await refresh();
-    if (saved.id === activeId) {
-      await api.applyProvider(saved);
-      flash(enabled ? t('toast.thinkingEnabled') : t('toast.thinkingDisabled'));
-    }
-  };
-
-  const handleSetEffort = async (id: string, effort: 'high' | 'max') => {
-    const full = await api.getProvider(id);
-    if (!full) return;
-    const updated = { ...full, reasoningEffort: effort };
-    const saved = await api.saveProvider(updated);
-    await refresh();
-    if (saved.id === activeId) {
-      await api.applyProvider(saved);
-      flash(t('toast.effortSet', { effort }));
-    }
-  };
-
   const handleDeleteFromDetail = async (id: string) => {
     await api.deleteProvider(id);
     setSelectedProviderId(null);
@@ -368,8 +344,6 @@ export default function App() {
                     onTest={() => handleTest(p.id)}
                     onDelete={() => handleDelete(p.id)}
                     onModelPicked={(model) => handleModelPicked(p.id, model)}
-                    onToggleThinking={(enabled) => handleToggleThinking(p.id, enabled)}
-                    onSetEffort={(effort) => handleSetEffort(p.id, effort)}
                   />
                 ))
               )}

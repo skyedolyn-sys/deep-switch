@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   VENDOR_ICONS,
   guessVendorFromUrl,
-  type Vendor,
 } from '../lib/vendor-icons';
 import type { Provider } from '../App';
 
@@ -17,8 +16,6 @@ interface Props {
   onTest: () => void;
   onDelete: () => void;
   onModelPicked: (model: string) => void;
-  onToggleThinking: (enabled: boolean) => void;
-  onSetEffort: (effort: 'high' | 'max') => void;
 }
 
 interface ModelState {
@@ -90,8 +87,6 @@ export function ProviderCard({
   onTest,
   onDelete,
   onModelPicked,
-  onToggleThinking,
-  onSetEffort,
 }: Props) {
   const { t } = useTranslation();
   const vendor = guessVendorFromUrl(provider.baseUrl);

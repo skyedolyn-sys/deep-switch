@@ -7,8 +7,6 @@ export function setupTauriBridge() {
   const isTauri = !!(window as any).__TAURI_INTERNALS__;
   if (!isTauri) return;
 
-  console.log('[Tauri] Initializing Tauri bridge for window.deepSwitch');
-
   (window as any).deepSwitch = {
     listProviders: () => invoke('list_providers'),
     getProvider: (id: string) => invoke('get_provider', { id }),
