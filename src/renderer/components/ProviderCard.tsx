@@ -11,6 +11,8 @@ import {
   OpenRouter,
   Groq,
   Doubao,
+  Minimax,
+  Qwen,
 } from '@lobehub/icons';
 import type { Provider } from '../App';
 
@@ -35,29 +37,37 @@ interface ModelState {
 }
 
 /** Map vendor key to its @lobehub/icons brand component. The .Avatar sub-
- *  component renders the official logo inside a colored rounded tile. */
-const VENDOR_ICON: Record<string, { Icon: any; useCircle: boolean; bg?: string }> = {
-  DeepSeek:    { Icon: DeepSeek, useCircle: true },
-  OpenAI:      { Icon: OpenAI,   useCircle: true },
-  'Moonshot (Kimi)': { Icon: Kimi, useCircle: true },
-  Moonshot:    { Icon: Moonshot, useCircle: true },
-  'Zhipu (GLM)': { Icon: Zhipu, useCircle: true },
-  SiliconFlow: { Icon: SiliconCloud, useCircle: true },
-  OpenRouter:  { Icon: OpenRouter, useCircle: true },
-  Groq:        { Icon: Groq, useCircle: true },
-  'ByteDance (Doubao)': { Icon: Doubao, useCircle: true },
+ *  component renders the official white glyph against a colored tile — `tile`
+ *  is the brand background (uses lobehub's COLOR_PRIMARY or COLOR_GRADIENT
+ *  for each vendor), `glyph` is always white so the logo is readable. */
+const VENDOR_ICON: Record<string, {
+  Icon: any;
+  /** Background of the vendor tile. Either a CSS color or "gradient:..." string. */
+  tile: string;
+}> = {
+  DeepSeek:             { Icon: DeepSeek,    tile: '#4D6BFE' },
+  OpenAI:                { Icon: OpenAI,      tile: '#000000' },
+  'Moonshot (Kimi)':     { Icon: Kimi,        tile: '#000000' },
+  Moonshot:              { Icon: Moonshot,    tile: '#000000' },
+  'Zhipu (GLM)':         { Icon: Zhipu,       tile: '#3762FF' },
+  SiliconFlow:           { Icon: SiliconCloud, tile: '#F96643' },
+  OpenRouter:            { Icon: OpenRouter,  tile: '#615CED' },
+  Groq:                  { Icon: Groq,        tile: '#F55036' },
+  'ByteDance (Doubao)':  { Icon: Doubao,      tile: '#3D6DFF' },
+  MiniMax:               { Icon: Minimax,     tile: '#F23F5D' },
+  Qwen:                  { Icon: Qwen,        tile: '#615CED' },
 };
 
 function renderVendorLogo(vendor: string) {
   const entry = VENDOR_ICON[vendor];
   if (entry) {
-    const { Icon, useCircle } = entry;
-    // Square Avatar mirrors the white-tile look from before so the brand
-    // colors stay readable on dark surface. Circle is the canonical shape
-    // used by lobehub docs and matches the original Material 3 spec.
+    const { Icon, tile } = entry;
+    // Each vendor's lobehub Avatar already paints itself with its brand
+    // background + white glyph — we just need the same size as before
+    // (48px) so it fits in the existing card layout.
     return (
-      <div className={`vendor-badge ${useCircle ? '' : 'badge-white-bg'}`}>
-        <Icon.Avatar size={48} shape={useCircle ? 'circle' : 'square'} />
+      <div className="vendor-badge">
+        <Icon.Avatar size={48} shape="square" />
       </div>
     );
   }
@@ -289,6 +299,7 @@ function guessVendor(baseUrl: string): string {
   if (u.includes('moonshot') || u.includes('kimi')) return 'Moonshot (Kimi)';
   if (u.includes('bigmodel') || u.includes('z.ai')) return 'Zhipu (GLM)';
   if (u.includes('minimax') || u.includes('minimaxi')) return 'MiniMax';
+  if (u.includes('dashscope') || u.includes('qwen') || u.includes('tongyi')) return 'Qwen';
   if (u.includes('volces')) return 'ByteDance (Doubao)';
   if (u.includes('siliconflow')) return 'SiliconFlow';
   if (u.includes('openrouter')) return 'OpenRouter';

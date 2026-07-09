@@ -16,6 +16,8 @@ export interface ProviderPreset {
   /** Which platform/auth system this uses */
   platform: string;
   platformEn: string;
+  /** Public API key / pricing page — rendered in the "Add Provider" card. */
+  homepageUrl?: string;
   /** Context window in tokens, if known */
   contextWindow?: number;
   /** Suffix appended to the card name when displayed in PresetSelector,
@@ -57,6 +59,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'V4 Pro · Recommended · 1M context · Deep reasoning · Agent-ready',
     hint: 'https://platform.deepseek.com/api_keys 获取 Key (sk- 开头)',
     hintEn: 'Get key at https://platform.deepseek.com/api_keys (sk- prefix)',
+    homepageUrl: 'https://platform.deepseek.com',
   },
   {
     id: 'deepseek-v4-flash', name: 'DeepSeek',
@@ -65,6 +68,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: true, reasoningEffort: 'high',
     description: 'V4 Flash · 快速响应 · 性价比高 · 轻量任务首选',
     descriptionEn: 'V4 Flash · Fast response · Cost-effective · Best for lightweight tasks',
+    homepageUrl: 'https://platform.deepseek.com',
   },
   {
     id: 'deepseek-r1', name: 'DeepSeek',
@@ -73,6 +77,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: true, reasoningEffort: 'max',
     description: 'R1 纯推理 · 数学/代码/逻辑 · 思维链',
     descriptionEn: 'R1 pure reasoning · Math / code / logic · Chain-of-thought',
+    homepageUrl: 'https://platform.deepseek.com',
   },
 
   // Kimi / Moonshot
@@ -85,6 +90,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'K2.7 Code · Coding-optimized · 256K context · 30% less thinking usage',
     hint: 'platform.moonshot.cn 控制台 · Key 前缀 sk-',
     hintEn: 'Get key from platform.moonshot.cn console · sk- prefix',
+    homepageUrl: 'https://platform.moonshot.cn',
     contextWindow: 262144,
   },
   {
@@ -96,6 +102,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'For Coding · Kimi Plus members · Coding-optimized · 256K context',
     hint: 'kimi.com/code 订阅 · Key 前缀 sk-kimi-',
     hintEn: 'Subscribe at kimi.com/code · sk-kimi- prefix',
+    homepageUrl: 'https://kimi.com/code',
     contextWindow: 262144,
     cardSuffix: ' · Coding',
   },
@@ -110,6 +117,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'GLM-4 Plus flagship · Switch to glm-4-flash / glm-4-air via dropdown',
     hint: 'open.bigmodel.cn 获取 Key',
     hintEn: 'Get key at open.bigmodel.cn',
+    homepageUrl: 'https://open.bigmodel.cn',
   },
 
   // MiniMax
@@ -122,6 +130,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'M3 flagship · Switch to M2.7 / M2 code-optimized / M2-highspeed via dropdown',
     hint: 'platform.minimaxi.com 订阅 coding-plan',
     hintEn: 'Subscribe to coding-plan at platform.minimaxi.com',
+    homepageUrl: 'https://platform.minimaxi.com',
     contextWindow: 200000,
     cardSuffix: ' · 国内',
     cardSuffixEn: ' · CN',
@@ -135,6 +144,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     descriptionEn: 'M3 flagship · International · Switch to other models via dropdown',
     hint: 'platform.minimax.io 订阅 coding-plan',
     hintEn: 'Subscribe to coding-plan at platform.minimax.io',
+    homepageUrl: 'https://platform.minimax.io',
     contextWindow: 200000,
     cardSuffix: ' · 国际',
     cardSuffixEn: ' · Global',
@@ -148,6 +158,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: true, reasoningEffort: 'max',
     description: 'Doubao Pro · 字节跳动 · 多模态 · 深度思考 · Coding Plan 推荐',
     descriptionEn: 'Doubao Pro · ByteDance · Multimodal · Deep reasoning · Coding Plan recommended',
+    homepageUrl: 'https://console.volcengine.com/ark',
   },
 
   // SiliconFlow
@@ -158,6 +169,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: false, reasoningEffort: 'max',
     description: '硅基流动 · 模型聚合 · DeepSeek/Qwen 等开源模型 · 免费额度',
     descriptionEn: 'SiliconFlow · Model hub · DeepSeek/Qwen open models · Free tier',
+    homepageUrl: 'https://siliconflow.cn',
   },
 
   // OpenRouter
@@ -168,6 +180,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: true, reasoningEffort: 'max',
     description: '全球模型网关 · 按量付费 · Claude/GPT/DeepSeek 等',
     descriptionEn: 'Global model gateway · Pay-as-you-go · Claude/GPT/DeepSeek and more',
+    homepageUrl: 'https://openrouter.ai',
   },
 
   // OpenAI
@@ -178,6 +191,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: false, reasoningEffort: 'max',
     description: 'GPT-4o · 128K 上下文 · 多模态 · 通用标杆',
     descriptionEn: 'GPT-4o · 128K context · Multimodal · General benchmark',
+    homepageUrl: 'https://platform.openai.com',
   },
 
   // Groq
@@ -188,6 +202,7 @@ export const BUILTIN_PRESETS: ProviderPreset[] = [
     apiFormat: 'openai', thinkingEnabled: false, reasoningEffort: 'max',
     description: '超快推理 · LPU 芯片 · Llama 系列 · 免费额度',
     descriptionEn: 'Ultra-fast inference · LPU chips · Llama family · Free tier',
+    homepageUrl: 'https://console.groq.com',
   },
 
   // Custom

@@ -59,6 +59,7 @@ pub struct ProviderPreset {
     pub context_window: Option<u64>,
     pub card_suffix: Option<String>,
     pub card_suffix_en: Option<String>,
+    pub homepage_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -77,6 +78,7 @@ pub struct LocalizedPreset {
     pub platform: String,
     pub context_window: Option<u64>,
     pub card_suffix: Option<String>,
+    pub homepage_url: Option<String>,
 }
 
 // ─── Default Config ──────────────────────────────────────────────────────────
@@ -199,7 +201,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: Some(1000000),
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://platform.deepseek.com".to_string()),
+},
         ProviderPreset {
             id: "deepseek-v4-flash".to_string(),
             name: "DeepSeek".to_string(),
@@ -218,7 +221,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://platform.deepseek.com".to_string()),
+},
         ProviderPreset {
             id: "deepseek-r1".to_string(),
             name: "DeepSeek".to_string(),
@@ -237,7 +241,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://platform.deepseek.com".to_string()),
+},
         ProviderPreset {
             id: "kimi-k2.7-code".to_string(),
             name: "Kimi".to_string(),
@@ -256,7 +261,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: Some(262144),
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://platform.moonshot.cn".to_string()),
+},
         ProviderPreset {
             id: "kimi-for-coding".to_string(),
             name: "Kimi".to_string(),
@@ -275,7 +281,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: Some(262144),
             card_suffix: Some(" · Coding".to_string()),
             card_suffix_en: Some(" · Coding".to_string()),
-        },
+            homepage_url: Some("https://kimi.com/code".to_string()),
+},
         ProviderPreset {
             id: "zhipu-glm".to_string(),
             name: "GLM".to_string(),
@@ -294,7 +301,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://open.bigmodel.cn".to_string()),
+},
         ProviderPreset {
             id: "siliconflow".to_string(),
             name: "SiliconFlow".to_string(),
@@ -313,7 +321,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://siliconflow.cn".to_string()),
+},
         ProviderPreset {
             id: "openrouter".to_string(),
             name: "OpenRouter".to_string(),
@@ -332,7 +341,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://openrouter.ai".to_string()),
+},
         ProviderPreset {
             id: "openai".to_string(),
             name: "OpenAI".to_string(),
@@ -351,7 +361,8 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
-        },
+            homepage_url: Some("https://platform.openai.com".to_string()),
+},
         ProviderPreset {
             id: "custom-blank".to_string(),
             name: "自定义".to_string(),
@@ -370,6 +381,7 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             context_window: None,
             card_suffix: None,
             card_suffix_en: None,
+            homepage_url: None,
         },
     ]
 }
@@ -838,6 +850,7 @@ fn list_presets(state: tauri::State<AppDb>) -> Vec<LocalizedPreset> {
             platform: if is_zh { p.platform } else { p.platform_en },
             context_window: p.context_window,
             card_suffix: if is_zh { p.card_suffix } else { p.card_suffix_en },
+            homepage_url: p.homepage_url,
         }
     }).collect()
 }
@@ -1013,7 +1026,12 @@ pub fn run() {
         .setup(|app| {
             let tray_icon = load_tray_icon(app.handle());
             let tray_builder = if let Some(icon) = tray_icon {
-                TrayIconBuilder::with_id("main").icon(icon)
+                // Mark as macOS template image so the system inverts the
+                // silhouette automatically to match the menu-bar appearance
+                // (white on dark menu bar, dark on light menu bar). Without
+                // this flag macOS renders the raw bitmap and a black glyph
+                // vanishes against the dark menu bar.
+                TrayIconBuilder::with_id("main").icon(icon).icon_as_template(true)
             } else {
                 TrayIconBuilder::with_id("main")
             };

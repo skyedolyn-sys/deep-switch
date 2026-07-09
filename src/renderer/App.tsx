@@ -34,6 +34,10 @@ export interface ProviderPreset {
   hintEn?: string;
   platform: string;
   platformEn: string;
+  /** Public API key / pricing page for this vendor — shown in the
+   *  "Add Provider" preset card as a clickable link. Optional because
+   *  the custom-blank preset has none. */
+  homepageUrl?: string;
   cardSuffix?: string;
   cardSuffixEn?: string;
 }

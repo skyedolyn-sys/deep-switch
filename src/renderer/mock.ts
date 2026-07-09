@@ -16,6 +16,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     descriptionEn: 'V4 Pro · Recommended · 1M context · Deep reasoning · Agent-ready',
     hint: 'https://platform.deepseek.com/api_keys 获取 Key (sk- 开头)',
     hintEn: 'Get key at https://platform.deepseek.com/api_keys (sk- prefix)',
+    homepageUrl: 'https://platform.deepseek.com',
   },
   {
     id: 'deepseek-v4-flash',
@@ -30,6 +31,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     reasoningEffort: 'high',
     description: 'V4 Flash · 快速响应 · 性价比高 · 轻量任务首选',
     descriptionEn: 'V4 Flash · Fast response · Cost-effective · Best for lightweight tasks',
+    homepageUrl: 'https://platform.deepseek.com',
   },
   {
     id: 'deepseek-r1',
@@ -44,6 +46,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     reasoningEffort: 'max',
     description: 'R1 纯推理 · 数学/代码/逻辑 · 思维链',
     descriptionEn: 'R1 pure reasoning · Math / code / logic · Chain-of-thought',
+    homepageUrl: 'https://platform.deepseek.com',
   },
   {
     id: 'kimi-k2.7-code',
@@ -60,6 +63,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     descriptionEn: 'K2.7 Code · Coding-optimized · 256K context · 30% less thinking usage',
     hint: 'platform.moonshot.cn 控制台 · Key 前缀 sk-',
     hintEn: 'Get key from platform.moonshot.cn console · sk- prefix',
+    homepageUrl: 'https://platform.moonshot.cn',
   },
   {
     id: 'openai',
@@ -74,6 +78,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     reasoningEffort: 'max',
     description: 'GPT-4o · 128K 上下文 · 多模态 · 通用标杆',
     descriptionEn: 'GPT-4o · 128K context · Multimodal · General benchmark',
+    homepageUrl: 'https://platform.openai.com',
   },
   {
     id: 'siliconflow',
@@ -88,6 +93,7 @@ const DEFAULT_PRESETS: ProviderPreset[] = [
     reasoningEffort: 'max',
     description: '硅基流动 · 模型聚合 · DeepSeek/Qwen 等开源模型 · 免费额度',
     descriptionEn: 'SiliconFlow · Model hub · DeepSeek/Qwen open models · Free tier',
+    homepageUrl: 'https://siliconflow.cn',
   },
   {
     id: 'custom-blank',
@@ -168,6 +174,30 @@ const DEFAULT_PROVIDERS: Provider[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: 'prov-minimax',
+    name: 'Minimax abab',
+    baseUrl: 'https://api.minimax.chat/v1',
+    apiKey: '••••••••',
+    model: 'abab6.5s-chat',
+    apiFormat: 'openai',
+    thinkingEnabled: false,
+    reasoningEffort: 'max',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prov-qwen',
+    name: 'Qwen3 Max',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '••••••••',
+    model: 'qwen3-max',
+    apiFormat: 'openai',
+    thinkingEnabled: true,
+    reasoningEffort: 'max',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 export function setupBrowserMock() {
@@ -182,7 +212,7 @@ export function setupBrowserMock() {
   const KEY_DC_EXISTS = 'ds_mock_dc_exists';
 
   // Seed storage if empty (or stale — bump version to refresh)
-  const MOCK_VERSION = 'v2';
+  const MOCK_VERSION = 'v3';
   if (!localStorage.getItem(KEY_PROVIDERS) || localStorage.getItem('ds_mock_version') !== MOCK_VERSION) {
     localStorage.setItem(KEY_PROVIDERS, JSON.stringify(DEFAULT_PROVIDERS));
     localStorage.setItem('ds_mock_version', MOCK_VERSION);

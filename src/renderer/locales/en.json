@@ -119,6 +119,7 @@
     "subtitle": "Choose a preset and enter your API key",
     "close": "✕",
     "presetLabel": "OpenAI-compatible presets ({{count}})",
+    "homepageLabel": "API website",
     "customSection": "Custom Config",
     "customPlaceholder": {
       "name": "Display name (e.g. My private proxy)",

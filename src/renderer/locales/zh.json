@@ -119,6 +119,7 @@
     "subtitle": "选择预设，输入 API Key",
     "close": "✕",
     "presetLabel": "OpenAI 兼容预设（{{count}}）",
+    "homepageLabel": "API 官网",
     "customSection": "自定义配置",
     "customPlaceholder": {
       "name": "显示名称（如：我的私有代理）",
