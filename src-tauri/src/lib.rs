@@ -1037,10 +1037,21 @@ pub fn run() {
             };
             let _tray = tray_builder.tooltip("Deep Switch").build(app)?;
 
+            // Hide to tray on window close instead of quitting.
+            // The user can right-click the tray icon to quit explicitly.
+            if let Some(win) = app.get_webview_window("main") {
+                let win_clone = win.clone();
+                win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { .. } = event {
+                        let _ = win_clone.hide();
+                    }
+                });
+            }
+
             let app_db = app.state::<AppDb>();
             let guard = app_db.data.lock().unwrap();
             let _ = rebuild_tray_menu(app.handle(), &guard);
-            
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

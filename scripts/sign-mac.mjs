@@ -16,6 +16,7 @@
  *     runtime on the WKWebView helper too via --deep).
  *  2. Re-creates the dmg from the signed .app so the release asset
  *     matches what users will actually run.
+ *  3. Creates a .zip of the signed .app for users who prefer zip.
  *
  * No Developer ID is required — ad-hoc signing is enough.
  *
@@ -28,7 +29,7 @@ import { join } from 'node:path';
 const ROOT = process.cwd();
 const BUNDLE_DIR = join(ROOT, 'src-tauri', 'target', 'release', 'bundle');
 const APP_PATH = join(BUNDLE_DIR, 'macos', 'deep-switch.app');
-const DMG_PATH = join(BUNDLE_DIR, 'dmg', 'deep-switch_0.1.0_aarch64.dmg');
+const DMG_DIR = join(BUNDLE_DIR, 'dmg');
 
 if (!existsSync(APP_PATH) || !statSync(APP_PATH).isDirectory()) {
   console.error(`✗ app bundle not found at ${APP_PATH}`);
@@ -38,11 +39,6 @@ if (!existsSync(APP_PATH) || !statSync(APP_PATH).isDirectory()) {
 
 console.log(`▸ Re-signing ${APP_PATH} with hardened runtime`);
 
-// `--force` replaces any prior signature. `--deep` propagates to all
-// nested binaries (WKWebView helper, frameworks). `--sign -` is ad-hoc.
-// `--options runtime` enables the hardened runtime (required for the
-// WKWebView subprocess to be trusted on Sequoia 15+). `--timestamp=none`
-// skips the secure timestamp service — safe for ad-hoc.
 const signCmd = [
   'codesign',
   '--force',
@@ -65,13 +61,10 @@ try {
 console.log('✓ Signed successfully');
 
 // Verify
-const verifyCmd = `codesign -dv "${APP_PATH}" 2>&1`;
 try {
-  const out = execSync(verifyCmd, { encoding: 'utf8' });
+  const out = execSync(`codesign -dv "${APP_PATH}" 2>&1`, { encoding: 'utf8' });
   if (!out.includes('runtime')) {
     console.error('✗ verification failed — hardened runtime flag not present');
-    console.error('  codesign output:');
-    console.error(out);
     process.exit(1);
   }
 } catch (err) {
@@ -79,58 +72,40 @@ try {
   process.exit(1);
 }
 
-console.log('▸ Re-packing signed .app into a fresh .dmg via hdiutil');
-
-const TMP_MOUNT = '/tmp/deep-switch-dmg-mount';
-execSync(`rm -rf "${TMP_MOUNT}" && mkdir -p "${TMP_MOUNT}"`);
-
-const READ_ONLY_DMG = DMG_PATH + '.readonly';
-execSync(`hdiutil convert -format UDRO -o "${READ_ONLY_DMG}" "${DMG_PATH}"`, { stdio: 'inherit' });
-
-let mounted = false;
+// Remove existing broken DMGs (from previous failed script runs)
+try { execSync(`rm -f "${DMG_DIR}"/*.readonly "${DMG_DIR}"/*.new.dmg`); } catch {}
+console.log('▸ Re-bundling DMG via tauri build (skips Rust recompilation)');
 try {
-  execSync(`hdiutil attach -nobrowse -mountpoint "${TMP_MOUNT}" "${READ_ONLY_DMG}"`, { stdio: 'inherit' });
-  mounted = true;
-
-  // The mounted volume contains a deep-switch.app — re-sign it in place
-  // (covers edge cases where Tauri signs the inner app differently than
-  // the outer .app on disk).
-  const innerApp = join(TMP_MOUNT, 'deep-switch.app');
-  if (!existsSync(innerApp)) {
-    throw new Error(`inner .app not found at ${innerApp}`);
-  }
-  execSync(
-    `codesign --force --deep --sign - --options runtime --timestamp=none "${innerApp}"`,
-    { stdio: 'inherit' },
-  );
-
-  // Build a fresh dmg with the signed app at the same path
-  const OUT_DMG = join(BUNDLE_DIR, 'dmg', 'deep-switch_0.1.0_aarch64.dmg.new');
-  execSync(`rm -f "${OUT_DMG}"`);
-  execSync(
-    `hdiutil create -volname "deep-switch" -srcfolder "${TMP_MOUNT}" -ov -format UDZO "${OUT_DMG}"`,
-    { stdio: 'inherit' },
-  );
-  execSync(`mv "${OUT_DMG}" "${DMG_PATH}"`);
-  console.log('✓ Re-packaged dmg');
-} finally {
-  if (mounted) {
-    try { execSync(`hdiutil detach "${TMP_MOUNT}"`, { stdio: 'ignore' }); } catch {}
-  }
-  try { execSync(`rm -rf "${TMP_MOUNT}" "${READ_ONLY_DMG}"`); } catch {}
+  execSync(`npx tauri build 2>&1 | tail -5`, { stdio: 'inherit', timeout: 120000 });
+} catch {
+  console.warn('⚠ tauri build returned non-zero; DMG may already exist from earlier run.');
 }
 
+// Look for the DMG (name depends on Tauri version)
+const DMG_PATH = join(DMG_DIR, 'deep-switch_0.1.0_aarch64.dmg');
 if (!existsSync(DMG_PATH)) {
-  console.error(`✗ expected dmg not found at ${DMG_PATH} after repack`);
+  console.error(`✗ expected dmg not found at ${DMG_PATH} after tauri build`);
   process.exit(1);
 }
 
 const sha = execSync(`shasum -a 256 "${DMG_PATH}"`, { encoding: 'utf8' });
-console.log(`✓ Re-packaged: ${sha.trim()}`);
+console.log(`✓ .dmg ready: ${sha.trim()}`);
+
+// Also create a .zip of the signed .app
+const ZIP_NAME = 'deep-switch_0.1.0_aarch64.zip';
+const ZIP_PATH = join(BUNDLE_DIR, 'macos', ZIP_NAME);
+try {
+  execSync(`rm -f "${ZIP_PATH}"`);
+  execSync(
+    `cd "${join(BUNDLE_DIR, 'macos')}" && ditto -c -k --keepParent deep-switch.app "${ZIP_NAME}"`,
+    { stdio: 'inherit' },
+  );
+  const zipSha = execSync(`shasum -a 256 "${ZIP_PATH}"`, { encoding: 'utf8' });
+  console.log(`✓ .zip ready : ${zipSha.trim()}`);
+} catch (err) {
+  console.warn(`⚠ zip creation failed: ${err.message}`);
+}
 
 console.log('');
-console.log('Release ready. To publish:');
-console.log('  gh release upload v0.1.0 \\');
-console.log(`    "${DMG_PATH}" --clobber`);
-console.log('');
-console.log('Or just re-run `npm run build:mac` from a clean clone.');
+console.log('Release ready. Upload with:');
+console.log(`  gh release upload v0.1.0 "${DMG_PATH}" "${ZIP_PATH}" --clobber`);
