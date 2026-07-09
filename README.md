@@ -12,13 +12,15 @@
 | Platform | Download | Size |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
 | macOS (Intel) | Build from source | — |
 | Linux / Windows | Build from source | — |
 
 > ⚠️ **The build is not signed or notarized.** macOS will show *"Deep Switch is damaged and can't be opened"* the first time. To bypass:
-> 1. Open the DMG, drag **Deep Switch** into `/Applications`.
-> 2. In **Finder**, navigate to `/Applications`, right-click **Deep Switch** → **Open** → confirm the dialog.
-> 3. From now on, double-click works normally.
+> 1. Open the DMG (or unzip the zip), drag **Deep Switch** into `/Applications`.
+> 2. Run in Terminal: `xattr -cr /Applications/deep-switch.app`
+> 3. Launch from Finder (right-click → **Open** if Gatekeeper still blocks).
+> 4. From now on, double-click works normally.
 >
 > Alternative (terminal): `sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
 >
