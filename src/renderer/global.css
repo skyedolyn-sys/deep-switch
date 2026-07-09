@@ -510,11 +510,6 @@ body {
   object-fit: cover;
 }
 
-.vendor-badge.badge-white-bg {
-  background: #ffffff;
-  border-color: #e3e3e3;
-}
-
 .card-info {
   display: flex;
   flex-direction: column;
@@ -1296,6 +1291,13 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 6px;
+}
+
+/* Custom-blank placeholder: ＋ glyph centered in the 32×32 badge */
+.preset-option .vendor-badge.preset-plus-fallback {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .preset-name {

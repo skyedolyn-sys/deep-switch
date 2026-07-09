@@ -2,18 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-  DeepSeek,
-  OpenAI,
-  Kimi,
-  Moonshot,
-  Zhipu,
-  SiliconCloud,
-  OpenRouter,
-  Groq,
-  Doubao,
-  Minimax,
-  Qwen,
-} from '@lobehub/icons';
+  VENDOR_ICONS,
+  guessVendorFromUrl,
+  type Vendor,
+} from '../lib/vendor-icons';
 import type { Provider } from '../App';
 
 interface Props {
@@ -36,41 +28,21 @@ interface ModelState {
   error?: string;
 }
 
-/** Map vendor key to its @lobehub/icons brand component. The .Avatar sub-
- *  component renders the official white glyph against a colored tile — `tile`
- *  is the brand background (uses lobehub's COLOR_PRIMARY or COLOR_GRADIENT
- *  for each vendor), `glyph` is always white so the logo is readable. */
-const VENDOR_ICON: Record<string, {
-  Icon: any;
-  /** Background of the vendor tile. Either a CSS color or "gradient:..." string. */
-  tile: string;
-}> = {
-  DeepSeek:             { Icon: DeepSeek,    tile: '#4D6BFE' },
-  OpenAI:                { Icon: OpenAI,      tile: '#000000' },
-  'Moonshot (Kimi)':     { Icon: Kimi,        tile: '#000000' },
-  Moonshot:              { Icon: Moonshot,    tile: '#000000' },
-  'Zhipu (GLM)':         { Icon: Zhipu,       tile: '#3762FF' },
-  SiliconFlow:           { Icon: SiliconCloud, tile: '#F96643' },
-  OpenRouter:            { Icon: OpenRouter,  tile: '#615CED' },
-  Groq:                  { Icon: Groq,        tile: '#F55036' },
-  'ByteDance (Doubao)':  { Icon: Doubao,      tile: '#3D6DFF' },
-  MiniMax:               { Icon: Minimax,     tile: '#F23F5D' },
-  Qwen:                  { Icon: Qwen,        tile: '#615CED' },
-};
+/** Map a vendor string to its lobehub icon. Vendor key comes from
+ *  `guessVendorFromUrl` and is the typed Vendor union. The .Avatar
+ *  sub-component paints the official white glyph on the brand tile. */
+const VENDOR_ICON_KEYS = new Set<string>(Object.keys(VENDOR_ICONS));
 
 function renderVendorLogo(vendor: string) {
-  const entry = VENDOR_ICON[vendor];
-  if (entry) {
-    const { Icon, tile } = entry;
-    // Each vendor's lobehub Avatar already paints itself with its brand
-    // background + white glyph — we just need the same size as before
-    // (48px) so it fits in the existing card layout.
+  if (VENDOR_ICON_KEYS.has(vendor)) {
+    const { Icon } = VENDOR_ICONS[vendor as keyof typeof VENDOR_ICONS];
     return (
       <div className="vendor-badge">
         <Icon.Avatar size={48} shape="square" />
       </div>
     );
   }
+  // Custom / unknown vendor — monogram fallback
   const initials = vendor.slice(0, 2).toUpperCase();
   return (
     <div className="vendor-badge">
@@ -122,7 +94,7 @@ export function ProviderCard({
   onSetEffort,
 }: Props) {
   const { t } = useTranslation();
-  const vendor = guessVendor(provider.baseUrl);
+  const vendor = guessVendorFromUrl(provider.baseUrl);
   const [models, setModels] = useState<ModelState>({ loading: false, open: false, models: [] });
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -292,17 +264,3 @@ export function ProviderCard({
   );
 }
 
-function guessVendor(baseUrl: string): string {
-  const u = baseUrl.toLowerCase();
-  if (u.includes('deepseek')) return 'DeepSeek';
-  if (u.includes('openai')) return 'OpenAI';
-  if (u.includes('moonshot') || u.includes('kimi')) return 'Moonshot (Kimi)';
-  if (u.includes('bigmodel') || u.includes('z.ai')) return 'Zhipu (GLM)';
-  if (u.includes('minimax') || u.includes('minimaxi')) return 'MiniMax';
-  if (u.includes('dashscope') || u.includes('qwen') || u.includes('tongyi')) return 'Qwen';
-  if (u.includes('volces')) return 'ByteDance (Doubao)';
-  if (u.includes('siliconflow')) return 'SiliconFlow';
-  if (u.includes('openrouter')) return 'OpenRouter';
-  if (u.includes('groq')) return 'Groq';
-  return 'Custom';
-}

@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import {
-  DeepSeek,
-  OpenAI,
-  Kimi,
-  Moonshot,
-  Zhipu,
-  SiliconCloud,
-  OpenRouter,
-  Groq,
-  Doubao,
-  Minimax,
-  Qwen,
-} from '@lobehub/icons';
+import { PRESET_ICONS } from '../lib/vendor-icons';
 import type { ProviderPreset } from '../App';
 
 interface Props {
@@ -25,40 +13,19 @@ function presetDisplayName(p: ProviderPreset): string {
   return p.name + (p.cardSuffix ?? '');
 }
 
-/** Map preset id (or vendor name) → @lobehub/icons component. The
- *  Icon.Avatar paints the official white glyph on the brand-colored tile. */
-const PRESET_VENDOR_ICON: Record<string, any> = {
-  'deepseek-v4-pro':   DeepSeek,
-  'deepseek-v4-flash':  DeepSeek,
-  'deepseek-r1':        DeepSeek,
-  'kimi-k2.7-code':     Kimi,
-  'kimi-for-coding':    Kimi,
-  'zhipu-glm':          Zhipu,
-  'minimax-cn':         Minimax,
-  'minimax-en':         Minimax,
-  'doubao-pro':         Doubao,
-  'siliconflow':        SiliconCloud,
-  'openrouter':         OpenRouter,
-  'openai':             OpenAI,
-  'groq':               Groq,
-  'qwen':               Qwen,
-  'custom-blank':       null,
-};
-
 function renderPresetLogo(presetId: string) {
-  const Icon = PRESET_VENDOR_ICON[presetId];
-  if (Icon) {
+  const entry = PRESET_ICONS[presetId];
+  if (entry) {
     return (
       <div className="vendor-badge">
-        <Icon.Avatar size={24} shape="square" />
+        <entry.Icon.Avatar size={24} shape="square" />
       </div>
     );
   }
-  // Custom-blank fallback: + sign
+  // Custom-blank fallback: + sign (the only preset id without a known
+  // brand icon)
   return (
-    <div className="vendor-badge">
-      <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>＋</span>
-    </div>
+    <div className="vendor-badge preset-plus-fallback">＋</div>
   );
 }
 
