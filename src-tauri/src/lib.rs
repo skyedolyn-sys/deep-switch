@@ -536,11 +536,11 @@ async fn test_provider_in_background(
 
 fn apply_to_deepcode_internal(provider: &ProviderConfig, data: &StoredData) -> bool {
     let config_path = PathBuf::from(&data.settings.deep_code_config_path);
-    
+
     if let Some(parent) = config_path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    
+
     let mut existing = if config_path.exists() {
         if let Ok(raw) = fs::read_to_string(&config_path) {
             serde_json::from_str::<serde_json::Value>(&raw).unwrap_or(serde_json::json!({}))
@@ -559,13 +559,13 @@ fn apply_to_deepcode_internal(provider: &ProviderConfig, data: &StoredData) -> b
     if !env.is_object() {
         env = serde_json::json!({});
     }
-    
+
     if let Some(env_obj) = env.as_object_mut() {
         env_obj.insert("BASE_URL".to_string(), serde_json::Value::String(provider.base_url.clone()));
         env_obj.insert("API_KEY".to_string(), serde_json::Value::String(provider.api_key.clone()));
         env_obj.insert("MODEL".to_string(), serde_json::Value::String(provider.model.clone()));
     }
-    
+
     if let Some(obj) = existing.as_object_mut() {
         obj.insert("env".to_string(), env);
         obj.insert("thinkingEnabled".to_string(), serde_json::Value::Bool(provider.thinking_enabled));
