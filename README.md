@@ -13,18 +13,15 @@
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
-| macOS (Intel) | Build from source | — |
-| Linux / Windows | Build from source | — |
+| macOS (Intel) | [`deep-switch_0.1.0_x64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64.dmg) | ~5 MB |
+| Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
+| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~7 MB |
+| Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
+| Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **The build is not signed or notarized.** macOS will show *"Deep Switch is damaged and can't be opened"* the first time. To bypass:
-> 1. Open the DMG (or unzip the zip), drag **Deep Switch** into `/Applications`.
-> 2. Run in Terminal: `xattr -cr /Applications/deep-switch.app`
-> 3. Launch from Finder (right-click → **Open** if Gatekeeper still blocks).
-> 4. From now on, double-click works normally.
+> ⚠️ **The macOS build is ad-hoc signed with hardened runtime, but not notarized.** Apple Silicon users on macOS 15 Sequoia should see no Gatekeeper prompt. On older macOS, or if Gatekeeper still blocks, run once: `xattr -cr /Applications/deep-switch.app` then re-launch from Finder (right-click → **Open** if it still complains). We will switch to a notarized release once we have a verified Apple Developer ID.
 >
-> Alternative (terminal): `sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
->
-> We will switch to a signed/notarized release once we have a verified Apple Developer ID. Until then, please use the workaround above.
+> Linux: AppImage is portable (no install); `.deb` for Debian/Ubuntu. Windows: MSI for system-wide install, NSIS `.exe` for portable per-user.
 
 ---
 
@@ -81,7 +78,7 @@ It is a mirror / interchangeable utility *for* Deep Code: it never modifies Deep
 
 Working with multiple providers shouldn't feel like juggling keys.
 
-- 🧩 **Too many providers, too many keys** — DeepSeek, Moonshot, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq… each with its own base URL, model name and quirks.
+- 🧩 **Too many providers, too many keys** — DeepSeek, Moonshot, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq, SenseTime SenseNova, Tsinghua DeepSeek-R1… each with its own base URL, model name and quirks.
 - 📝 **Manual `settings.json` editing** — easy to typo a key, easy to leave a stray comma that breaks the file.
 - 🐢 **Slow switching** — quit the CLI, edit the file, relaunch, wait, repeat.
 - 💾 **Lost backup state** — overwrite the file and your old config is gone forever.
@@ -94,14 +91,17 @@ Deep Switch collapses all of that into a one-click action.
 ## Features
 
 - ⚡ **One-click activation** — pick a provider, click *Enable*, done.
-- 📦 **Preset coverage** — DeepSeek · Moonshot/Kimi · Zhipu GLM · MiniMax · ByteDance Doubao · SiliconFlow · OpenRouter · OpenAI · Groq, plus a fully customizable *Custom* slot.
+- 📦 **Preset coverage** — DeepSeek · Moonshot/Kimi · Zhipu GLM · MiniMax · ByteDance Doubao · SiliconFlow · OpenRouter · OpenAI · Groq · SenseTime SenseNova · Tsinghua DeepSeek-R1 (671B full + 32B distilled, both selectable in the preset card), plus a fully customizable *Custom* slot.
 - 🔄 **Live apply** — edits `~/.deepcode/settings.json` directly. The next call your CLI makes already uses the new provider. **No restart needed.**
+- 🌐 **OpenCode sync** — also writes the equivalent provider to `~/.config/opencode/opencode.json` so the opencode-ai CLI can use it through its `@ai-sdk/openai-compatible` adapter. Same provider, two clients.
 - 🧠 **Model picker** — fetches the live model list from a provider's `/v1/models` endpoint so you're always picking from what's actually available.
 - 🤔 **Thinking mode toggle** — enable chain-of-thought and pick the reasoning depth: `high` or `max`.
+- 🛰️ **Campus / WAF-tolerant proxy** — for providers behind strict WAFs (e.g. Tsinghua's madmodel.cs.tsinghua.edu.cn), Deep Switch spawns an embedded Node.js helper (`scripts/tsinghua-proxy.mjs`) that auto-retries on transient 404s, splits `<think>` reasoning into a separate `reasoning_content` delta, and streams warning chunks back to the client so the CLI never appears hung while retrying.
+- 🪟 **Hide-to-tray on close** — closing the window keeps the app alive in the menu bar; right-click the tray icon to quit.
 - 🌐 **Bilingual UI** — Simplified Chinese and English, with automatic detection of system locale and a manual override.
-- 📌 **Tray menu quick-switch** — right-click the tray icon to flip providers without opening the window; labels follow your UI language.
+- 📌 **Tray menu quick-switch** — right-click the tray icon to flip providers without opening the window; labels follow your UI language; state syncs back to the main window via an `active-provider-changed` event.
 - 🪄 **First-time "Detect current config" import** — reads whatever Deep Code is currently configured for and turns it into a saveable provider with one click.
-- 🔒 **Local-only credentials** — stored in `~/.deep-switch/config.json`. Never uploaded, never synced, never logged.
+- 🔒 **Local-only credentials** — stored in `~/.deep-switch/config.json` with `0600` permissions. Never uploaded, never synced, never logged.
 - 🎯 **Health checks** — optional lightweight probe of the provider's base URL so you know before the CLI does.
 - 🪶 **Lightweight** — single tray icon, system webview, ~12 MB on disk. No bundled Chromium, no background daemon.
 
@@ -147,7 +147,7 @@ Download the latest `.dmg` from the [Releases](../../releases) page and drag **D
 
 ### Linux & Windows
 
-There is no first-party installer for Linux or Windows yet — but the app runs fine from source:
+First-party installers are now available — see the [Download](#download) table at the top. If you'd rather run from source:
 
 ```bash
 git clone https://github.com/skyedolyn-sys/deep-switch.git
@@ -196,10 +196,11 @@ npm run lint
 | Shell            | **Tauri 2** (uses the system WebView)            |
 | Renderer         | **React 18** + **TypeScript 5** + **Vite 5**    |
 | Native backend   | **Rust 1.77+** (serde, reqwest, tauri-plugin-log) |
+| WAF helper       | Embedded **Node.js** subprocess (`scripts/tsinghua-proxy.mjs`) spawned only when you switch to a WAF-protected provider; transparent retry + SSE streaming |
 | i18n             | **i18next** + `i18next-browser-languagedetector` |
 | Vendor icons     | **@lobehub/icons** (open-source SVG brand pack)  |
 | Local store      | `~/.deep-switch/config.json` (JSON, atomic write) |
-| Persistence      | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` |
+| Persistence      | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` + `~/.config/opencode/opencode.json` |
 
 ---
 
@@ -266,4 +267,4 @@ If you find a security issue, please open a private advisory instead of a public
 
 ## Acknowledgments
 
-Huge thanks to the providers whose APIs this app routes between — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq** — and to the maintainers of Tauri, React, Vite, Rust and i18next whose work makes this app trivial to build.
+Huge thanks to the providers whose APIs this app routes between — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq, SenseTime SenseNova, Tsinghua DeepSeek-R1** — and to the maintainers of Tauri, React, Vite, Rust and i18next whose work makes this app trivial to build.

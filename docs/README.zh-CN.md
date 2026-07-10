@@ -11,17 +11,16 @@
 | 平台 | 下载 | 大小 |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
-| macOS (Intel) | 源码编译 | — |
-| Linux / Windows | 源码编译 | — |
+| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
+| macOS (Intel) | [`deep-switch_0.1.0_x64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64.dmg) | ~5 MB |
+| Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
+| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~7 MB |
+| Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
+| Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **构建未签名也未经过苹果公证。** 首次启动 macOS 会提示 *「Deep Switch 已损坏,无法打开」*。绕过方法:
-> 1. 打开 DMG,把 **Deep Switch** 拖入 `/Applications`。
-> 2. 在 **Finder** 进入 `/Applications`,右键 **Deep Switch** → **打开** → 在弹窗中确认。
-> 3. 之后就可以正常双击启动了。
+> ⚠️ **macOS 构建使用了 ad-hoc 签名 + hardened runtime,但未经过苹果公证。** macOS 15 Sequoia 上的 Apple Silicon 用户应该不会再看到 Gatekeeper 提示。旧版 macOS 上若仍被拦截,可执行一次 `xattr -cr /Applications/deep-switch.app` 后再从 Finder 启动(若仍报错,右键 → **打开**)。等拿到合规的 Apple Developer ID 之后,会切到公证版本。
 >
-> 命令行方式:`sudo xattr -dr com.apple.quarantine "/Applications/Deep Switch.app"`
->
-> 等我们拿到 Apple Developer ID 之后会切换为签名 + 公证版本。在此之前请用上面的方法。
+> Linux:AppImage 是便携版(无需安装);`.deb` 适用于 Debian/Ubuntu。Windows:MSI 用于系统级安装,NSIS `.exe` 是便携的单用户安装包。
 
 ---
 
@@ -70,7 +69,7 @@ Deep Switch 是一款小巧的 macOS 菜单栏 / Dock 工具(在 Linux 和 Windo
 
 要在多家服务商之间穿梭,本不该这么痛苦。
 
-- 🧩 **服务商太多,密钥太多** —— DeepSeek、Moonshot、智谱 GLM、MiniMax、字节豆包、SiliconFlow、OpenRouter、OpenAI、Groq……每家都有自家的 Base URL、模型名和坑点。
+- 🧩 **服务商太多,密钥太多** —— DeepSeek、Moonshot、智谱 GLM、MiniMax、字节豆包、SiliconFlow、OpenRouter、OpenAI、Groq、商汤 SenseNova、清华 DeepSeek-R1……每家都有自家的 Base URL、模型名和坑点。
 - 📝 **手动改 `settings.json`** —— 复制错一个字符、忘了加逗号,JSON 就崩了。
 - 🐢 **切换太慢** —— 退出 CLI、改文件、重启、再等,反反复复。
 - 💾 **备份状态容易丢失** —— 一覆盖,旧配置就再也回不来了。
@@ -83,14 +82,17 @@ Deep Switch 把这些全部收拢成一次点击。
 ## 功能特性
 
 - ⚡ **一键启用** —— 选好服务商,点 *启用*,结束。
-- 📦 **预设覆盖** —— DeepSeek · 月之暗面/Kimi · 智谱 GLM · MiniMax · 字节豆包 · SiliconFlow · OpenRouter · OpenAI · Groq,再加一个完全自定义的 *Custom* 槽位。
+- 📦 **预设覆盖** —— DeepSeek · 月之暗面/Kimi · 智谱 GLM · MiniMax · 字节豆包 · SiliconFlow · OpenRouter · OpenAI · Groq · 商汤 SenseNova · 清华 DeepSeek-R1(671B 满血 + 32B 蒸馏,二者均可在预设卡片中选用),再加一个完全自定义的 *Custom* 槽位。
 - 🔄 **实时生效** —— 直接改写 `~/.deepcode/settings.json`。你下次调用 CLI,就已经在新服务商上了。**无需重启。**
+- 🌐 **OpenCode 同步** —— 同步把同一份服务商配置写入 `~/.config/opencode/opencode.json`,让 opencode-ai CLI 通过 `@ai-sdk/openai-compatible` 适配器也能用上。一份配置,两个客户端。
 - 🧠 **模型选择器** —— 从服务商的 `/v1/models` 端点实时拉取模型列表,所选即所得。
 - 🤔 **思考模式开关** —— 启用思维链,并可设定推理深度:`high`(高)或 `max`(极高)。
+- 🛰️ **校园 / WAF 友好代理** —— 对身处严格 WAF 后的服务商(如清华的 madmodel.cs.tsinghua.edu.cn),Deep Switch 会拉起一个内嵌的 Node.js 辅助进程(`scripts/tsinghua-proxy.mjs`),自动重试瞬时 404,把 `<think>` 推理段单独拆成 `reasoning_content` 增量,并把警告片段以 chunk 形式流回客户端——CLI 在重试期间不会卡住。
+- 🪟 **关闭即隐入托盘** —— 关闭窗口后应用继续驻留菜单栏;右键托盘图标可彻底退出。
 - 🌐 **双语界面** —— 简体中文与英文,自动识别系统语言,同时支持手动覆盖。
-- 📌 **托盘菜单快速切换** —— 右键托盘图标即可在服务商间穿梭,无需打开主窗口;菜单文案跟随界面语言。
+- 📌 **托盘菜单快速切换** —— 右键托盘图标即可在服务商间穿梭,无需打开主窗口;菜单文案跟随界面语言;状态变更通过 `active-provider-changed` 事件同步回主窗口。
 - 🪄 **首次"检测当前配置"导入** —— 读取 Deep Code 当前的实际配置,一键变成可保存的服务商。
-- 🔒 **凭据仅本地存储** —— 放在 `~/.deep-switch/config.json` 里。不上传、不同步、不留日志。
+- 🔒 **凭据仅本地存储** —— 放在 `~/.deep-switch/config.json` 里,文件权限 `0600`。不上传、不同步、不留日志。
 - 🎯 **健康检查** —— 可选地轻量探测服务商 Base URL,在 CLI 报错之前就告诉你通不通。
 - 🪶 **轻量** —— 单一托盘图标,系统 WebView,体积约 12 MB。无内置 Chromium,无后台守护进程。
 
@@ -135,7 +137,7 @@ Deep Switch 把这些全部收拢成一次点击。
 
 ### Linux 与 Windows
 
-目前还没有官方安装包,但可以从源码运行:
+官方安装包现已发布——参见页面顶部的 [下载](#下载--download) 表。如果更想从源码运行:
 
 ```bash
 git clone https://github.com/skyedolyn-sys/deep-switch.git
@@ -184,10 +186,11 @@ npm run lint
 | 外壳            | **Tauri 2**(使用系统 WebView)                    |
 | 渲染层          | **React 18** + **TypeScript 5** + **Vite 5**     |
 | 原生后端        | **Rust 1.77+**(serde, reqwest, tauri-plugin-log)  |
+| WAF 辅助进程    | 内嵌 **Node.js** 子进程(`scripts/tsinghua-proxy.mjs`),仅在切换到 WAF 保护的服务商时拉起;透明重试 + SSE 流式转发 |
 | 国际化          | **i18next** + `i18next-browser-languagedetector` |
 | 厂商图标        | **@lobehub/icons**(开源 SVG 品牌包)               |
 | 本地存储        | `~/.deep-switch/config.json`(JSON,原子写入)       |
-| 持久化          | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` |
+| 持久化          | `~/.deep-switch/config.json` + `~/.deepcode/settings.json` + `~/.config/opencode/opencode.json` |
 
 ---
 
@@ -254,4 +257,4 @@ deep-switch/
 
 ## 致谢
 
-诚挚感谢以下服务商提供的 API,本应用正是建立在它们之上——**DeepSeek、Moonshot / Kimi、智谱 GLM、MiniMax、字节豆包、SiliconFlow、OpenRouter、OpenAI、Groq**——以及 Tauri、React、Vite、Rust、i18next 的维护者们,他们的工作让这个应用的构建变得轻而易举。
+诚挚感谢以下服务商提供的 API,本应用正是建立在它们之上——**DeepSeek、Moonshot / Kimi、智谱 GLM、MiniMax、字节豆包、SiliconFlow、OpenRouter、OpenAI、Groq、商汤 SenseNova、清华 DeepSeek-R1**——以及 Tauri、React、Vite、Rust、i18next 的维护者们,他们的工作让这个应用的构建变得轻而易举。
