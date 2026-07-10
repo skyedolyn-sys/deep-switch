@@ -51,6 +51,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { status: string; latencyMs: number; error?: string }>>({});
   const [deepCodePath, setDeepCodePath] = useState<{ path: string; exists: boolean } | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const api = window.deepSwitch;
 
@@ -133,10 +134,8 @@ export default function App() {
     }));
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('dialog.deleteProvider'))) return;
-    await api.deleteProvider(id);
-    await refresh();
+  const handleDelete = (id: string) => {
+    setDeleteConfirmId(id);
   };
 
   const handleDetect = async () => {
@@ -359,6 +358,34 @@ export default function App() {
 
         {showPresetSelector && (
           <PresetSelector onAdd={handleAddFromPreset} onClose={() => setShowPresetSelector(false)} />
+        )}
+
+        {deleteConfirmId && (
+          <div className="modal-overlay" onClick={() => setDeleteConfirmId(null)}>
+            <div className="modal-panel delete-confirm-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+              <div className="modal-header">
+                <h2>{t('dialog.deleteTitle') || '确认删除'}</h2>
+              </div>
+              <div className="modal-body">
+                <p>{t('dialog.deleteProvider') || '确定要删除这个服务提供商吗？'}</p>
+              </div>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setDeleteConfirmId(null)}>{t('presetSelector.cancel')}</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ backgroundColor: 'var(--red)', borderColor: 'var(--red)' }}
+                  onClick={async () => {
+                    await api.deleteProvider(deleteConfirmId);
+                    setDeleteConfirmId(null);
+                    await refresh();
+                  }}
+                >
+                  确定删除
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {toast && <div className="toast">{toast}</div>}

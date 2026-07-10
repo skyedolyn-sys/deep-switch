@@ -34,6 +34,7 @@ export function PresetSelector({ onAdd, onClose }: Props) {
   const [presets, setPresets] = useState<ProviderPreset[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [tsinghuaModel, setTsinghuaModel] = useState('DeepSeek-R1-671B');
 
   const [cName, setCName] = useState('');
   const [cBaseUrl, setCBaseUrl] = useState('');
@@ -63,7 +64,10 @@ export function PresetSelector({ onAdd, onClose }: Props) {
     e.preventDefault();
     if (!selected || !apiKey.trim()) return;
     if (isCustom && (!cName.trim() || !cBaseUrl.trim() || !cModel.trim())) return;
-    if (isCustom) {
+    if (selectedId === 'tsinghua-deepseek-r1') {
+      const presetCopy = { ...selected, model: tsinghuaModel };
+      onAdd(presetCopy, apiKey.trim());
+    } else if (isCustom) {
       onAdd(selected, apiKey.trim(), {
         name: cName.trim(),
         baseUrl: cBaseUrl.trim(),
@@ -110,10 +114,12 @@ export function PresetSelector({ onAdd, onClose }: Props) {
                   {p.homepageUrl && (
                     <a
                       className="preset-homepage"
-                      href={p.homepageUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      onClick={(e) => e.stopPropagation()}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.deepSwitch.openInBrowser(p.homepageUrl!);
+                      }}
                     >
                       <span className="preset-homepage-label">{t('presetSelector.homepageLabel')}</span>
                       <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -155,6 +161,34 @@ export function PresetSelector({ onAdd, onClose }: Props) {
             </div>
           )}
 
+          {selectedId === 'tsinghua-deepseek-r1' && (
+            <div className="form-section">
+              <label>选择模型 / Select Model</label>
+              <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.9em' }}>
+                  <input
+                    type="radio"
+                    name="tsinghuaModel"
+                    value="DeepSeek-R1-671B"
+                    checked={tsinghuaModel === 'DeepSeek-R1-671B'}
+                    onChange={() => setTsinghuaModel('DeepSeek-R1-671B')}
+                  />
+                  <span>DeepSeek-R1-671B (默认)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.9em' }}>
+                  <input
+                    type="radio"
+                    name="tsinghuaModel"
+                    value="DeepSeek-R1-32B"
+                    checked={tsinghuaModel === 'DeepSeek-R1-32B'}
+                    onChange={() => setTsinghuaModel('DeepSeek-R1-32B')}
+                  />
+                  <span>DeepSeek-R1-32B (蒸馏版)</span>
+                </label>
+              </div>
+            </div>
+          )}
+
           {selected && (
             <div className="form-section">
               <label>{t('presetSelector.apiKey')}</label>
@@ -166,10 +200,25 @@ export function PresetSelector({ onAdd, onClose }: Props) {
                 onChange={(e) => setApiKey(e.target.value)}
                 autoFocus={!isCustom}
               />
+              {selectedId === 'tsinghua-deepseek-r1' && (
+                <div style={{ marginTop: 8, fontSize: '0.85em', color: 'var(--text-muted)' }}>
+                  <span>快速获取 API-KEY：</span>
+                  <a
+                    href="#"
+                    style={{ textDecoration: 'underline', color: 'var(--primary)' }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.deepSwitch.openInBrowser('https://madmodel.cs.tsinghua.edu.cn/');
+                    }}
+                  >
+                    前往清华 MadModel 官网获取 (5小时有效期) →
+                  </a>
+                </div>
+              )}
               {!isCustom && (
                 <div className="form-hint">
                   <span dangerouslySetInnerHTML={{ __html: t('presetSelector.info.baseUrl', { baseUrl: selected.baseUrl }) }} />
-                  <span dangerouslySetInnerHTML={{ __html: t('presetSelector.info.model', { model: selected.model }) }} />
+                  <span dangerouslySetInnerHTML={{ __html: t('presetSelector.info.model', { model: selectedId === 'tsinghua-deepseek-r1' ? tsinghuaModel : selected.model }) }} />
                 </div>
               )}
             </div>

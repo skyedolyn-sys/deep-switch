@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -7,6 +8,129 @@ use serde::{Deserialize, Serialize};
 use tauri::Manager;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
+
+/// Embedded Tsinghua DeepSeek WAF bypass proxy (Node.js). (Build: 20260710-1906)
+/// Spawned as a child process only when the user switches to a Tsinghua provider.
+const TSINGHUA_PROXY_SCRIPT: &str = include_str!("../../scripts/tsinghua-proxy.mjs");
+
+/// True if `base_url` points to Tsinghua's madmodel.cs.tsinghua.edu.cn endpoint.
+fn is_tsinghua(base_url: &str) -> bool {
+    base_url.contains("madmodel.cs.tsinghua.edu.cn")
+}
+
+/// Start the local WAF-bypass proxy. Kills any previously-spawned instance first
+/// so that the cached port + child handle always reflect the running process.
+/// Returns the OS-assigned port the proxy is listening on.
+fn start_tsinghua_proxy(state: &AppDb) -> Result<u16, String> {
+    let mut guard = state.tsinghua_proxy.lock().unwrap();
+    if let Some(mut h) = guard.take() {
+        match h.child.try_wait() {
+            Ok(None) => {
+                // The proxy process is still running. Reuse it!
+                let port = h.port;
+                *guard = Some(h);
+                return Ok(port);
+            }
+            _ => {
+                // Process has exited or errored. Clean up.
+                let _ = h.child.kill();
+                let _ = h.child.wait();
+            }
+        }
+    }
+
+    let cache_dir = dirs::cache_dir()
+        .ok_or_else(|| "could not determine cache_dir".to_string())?
+        .join("deep-switch");
+    fs::create_dir_all(&cache_dir).map_err(|e| format!("create cache dir: {}", e))?;
+    let script_path = cache_dir.join("tsinghua-proxy.mjs");
+    fs::write(&script_path, TSINGHUA_PROXY_SCRIPT)
+        .map_err(|e| format!("write proxy script: {}", e))?;
+
+    // Clear port 9527 if it's already bound by a stale proxy process
+    #[cfg(not(target_os = "windows"))]
+    let _ = std::process::Command::new("sh")
+        .args(&["-c", "kill -9 $(lsof -t -i:9527) 2>/dev/null || true"])
+        .status();
+
+    let mut child = std::process::Command::new("node")
+        .arg(&script_path)
+        .arg("9527") // 9527 = Fixed proxy port to prevent terminal disconnects
+        .env("PROXY_LOG", "/tmp/deep-switch-proxy.log")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| format!("spawn node: {}", e))?;
+
+    let stdout = child
+        .stdout
+        .as_mut()
+        .ok_or_else(|| "no stdout from proxy".to_string())?;
+    // Read the proxy's "PROXY_PORT=NNNN" line by line so we don't depend on
+    // the child closing its stdout (the Node event loop keeps stdout open
+    // for the lifetime of the HTTP server, so read_to_string would hang
+    // forever waiting for EOF).
+    use std::io::{BufRead, BufReader};
+    let mut reader = BufReader::new(stdout);
+    let mut port_line = String::new();
+    let mut got_port = false;
+    // Cap at 10 lines so a misbehaving proxy can't pin us here indefinitely.
+    for _ in 0..10 {
+        let mut line = String::new();
+        match reader.read_line(&mut line) {
+            Ok(0) => break, // EOF (rare; only if proxy closes stdout)
+            Ok(_) => {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix("PROXY_PORT=") {
+                    port_line = rest.to_string();
+                    got_port = true;
+                    break;
+                }
+            }
+            Err(e) => return Err(format!("read proxy stdout: {}", e)),
+        }
+    }
+    if !got_port {
+        return Err("proxy stdout missing PROXY_PORT line".to_string());
+    }
+    let port: u16 = port_line
+        .parse()
+        .map_err(|e| format!("parse proxy port '{}': {}", port_line, e))?;
+
+    *guard = Some(TsinghuaProxyHandle { port, child });
+    Ok(port)
+}
+
+/// Stop the proxy if running. Safe to call when no proxy is running.
+fn stop_tsinghua_proxy(state: &AppDb) {
+    let mut guard = state.tsinghua_proxy.lock().unwrap();
+    if let Some(mut h) = guard.take() {
+        let _ = h.child.kill();
+        let _ = h.child.wait();
+    }
+}
+
+/// Resolve the URL that should actually be written into Deep Code's settings.json
+/// for the given provider. For Tsinghua, this starts (or reuses) the local
+/// proxy and returns `http://127.0.0.1:{port}/v1`. For everything else, it
+/// stops any running proxy and returns the provider's real base URL.
+fn resolve_effective_base_url(provider: &ProviderConfig, state: &AppDb) -> String {
+    if is_tsinghua(&provider.base_url) && provider.id != "tsinghua-deepseek-direct" {
+        match start_tsinghua_proxy(state) {
+            Ok(port) => format!("http://127.0.0.1:{}/v1", port),
+            Err(e) => {
+                eprintln!(
+                    "[tsinghua-proxy] start failed: {}, falling back to direct",
+                    e
+                );
+                provider.base_url.clone()
+            }
+        }
+    } else {
+        stop_tsinghua_proxy(state);
+        provider.base_url.clone()
+    }
+}
 
 // ─── Data Structs ────────────────────────────────────────────────────────────
 
@@ -130,6 +254,12 @@ pub struct AppDb {
     pub store_path: PathBuf,
     pub data: Mutex<StoredData>,
     pub health_cache: Mutex<HashMap<String, (bool, u64)>>,
+    pub tsinghua_proxy: Mutex<Option<TsinghuaProxyHandle>>,
+}
+
+pub struct TsinghuaProxyHandle {
+    pub port: u16,
+    pub child: std::process::Child,
 }
 
 impl AppDb {
@@ -146,11 +276,12 @@ impl AppDb {
                 }
             }
         }
-        
+
         let db = AppDb {
             store_path,
             data: Mutex::new(data),
             health_cache: Mutex::new(HashMap::new()),
+            tsinghua_proxy: Mutex::new(None),
         };
         
         // Run migration
@@ -158,6 +289,24 @@ impl AppDb {
             let mut guard = db.data.lock().unwrap();
             if guard.migrate() {
                 db.save_locked(&guard);
+            }
+        }
+        
+        // Start Tsinghua proxy on startup if active
+        let active_provider = {
+            let guard = db.data.lock().unwrap();
+            if let Some(active_id) = &guard.settings.active_provider_id {
+                guard.providers.iter().find(|p| &p.id == active_id).cloned()
+            } else {
+                None
+            }
+        };
+        if let Some(provider) = active_provider {
+            if is_tsinghua(&provider.base_url) {
+                if let Ok(port) = start_tsinghua_proxy(&db) {
+                    let guard = db.data.lock().unwrap();
+                    let _ = apply_to_deepcode_internal(&provider, &db, &guard);
+                }
             }
         }
         
@@ -364,6 +513,66 @@ fn get_builtin_presets() -> Vec<ProviderPreset> {
             homepage_url: Some("https://platform.openai.com".to_string()),
 },
         ProviderPreset {
+            id: "tsinghua-deepseek-r1".to_string(),
+            name: "清华 DeepSeek-R1".to_string(),
+            base_url: "https://madmodel.cs.tsinghua.edu.cn/v1".to_string(),
+            model: "DeepSeek-R1-671B".to_string(),
+            vendor: "Tsinghua".to_string(),
+            api_format: "openai".to_string(),
+            thinking_enabled: true,
+            reasoning_effort: "max".to_string(),
+            description: "满血版 (671B) & 蒸馏版 (32B) · 清华校内推理服务 · 5h token".to_string(),
+            description_en: "Full (671B) & Distilled (32B) · Tsinghua campus inference · 5h token".to_string(),
+            hint: Some("登录 madmodel.cs.tsinghua.edu.cn → API 使用指南 → 复制 token,5 小时后过期".to_string()),
+            hint_en: Some("Login at madmodel.cs.tsinghua.edu.cn → copy token (5h expiry)".to_string()),
+            platform: "清华 DeepSeek (madmodel.cs.tsinghua.edu.cn)".to_string(),
+            platform_en: "Tsinghua DeepSeek (madmodel.cs.tsinghua.edu.cn)".to_string(),
+            context_window: Some(1000000),
+            card_suffix: None,
+            card_suffix_en: None,
+            homepage_url: Some("https://madmodel.cs.tsinghua.edu.cn".to_string()),
+        },
+        ProviderPreset {
+            id: "tsinghua-deepseek-direct".to_string(),
+            name: "清华 DeepSeek-R1 (直连)".to_string(),
+            base_url: "https://madmodel.cs.tsinghua.edu.cn/v1".to_string(),
+            model: "DeepSeek-R1-671B".to_string(),
+            vendor: "TsinghuaDirect".to_string(),
+            api_format: "openai".to_string(),
+            thinking_enabled: true,
+            reasoning_effort: "max".to_string(),
+            description: "直连版 (671B) · 完全不通过本地代理 · 测试 Vercel AI SDK 兼容路径".to_string(),
+            description_en: "Direct (671B) · No local proxy · Test Vercel AI SDK compatible path".to_string(),
+            hint: Some("登录 madmodel.cs.tsinghua.edu.cn → API 使用指南 → 复制 token,5 小时后过期".to_string()),
+            hint_en: Some("Login at madmodel.cs.tsinghua.edu.cn → copy token (5h expiry)".to_string()),
+            platform: "清华 DeepSeek (madmodel.cs.tsinghua.edu.cn)".to_string(),
+            platform_en: "Tsinghua DeepSeek (madmodel.cs.tsinghua.edu.cn)".to_string(),
+            context_window: Some(1000000),
+            card_suffix: None,
+            card_suffix_en: None,
+            homepage_url: Some("https://madmodel.cs.tsinghua.edu.cn".to_string()),
+        },
+        ProviderPreset {
+            id: "sensenova".to_string(),
+            name: "商汤日日新".to_string(),
+            base_url: "https://token.sensenova.cn/v1".to_string(),
+            model: "sensenova-6.7-flash-lite".to_string(),
+            vendor: "SenseTime".to_string(),
+            api_format: "openai".to_string(),
+            thinking_enabled: false,
+            reasoning_effort: "max".to_string(),
+            description: "日日新 6.7 · 快速开发 · 开源 OpenCode 推荐模型".to_string(),
+            description_en: "SenseNova 6.7 · Fast development · Recommended for OpenCode".to_string(),
+            hint: Some("访问 platform.sensenova.cn 获取 API Key".to_string()),
+            hint_en: Some("Get API Key at platform.sensenova.cn".to_string()),
+            platform: "商汤开发者平台 (platform.sensenova.cn)".to_string(),
+            platform_en: "SenseNova Developer Platform (platform.sensenova.cn)".to_string(),
+            context_window: Some(256000),
+            card_suffix: None,
+            card_suffix_en: None,
+            homepage_url: Some("https://platform.sensenova.cn".to_string()),
+        },
+        ProviderPreset {
             id: "custom-blank".to_string(),
             name: "自定义".to_string(),
             base_url: "".to_string(),
@@ -460,7 +669,8 @@ async fn test_provider_connection(
     };
     
     let client = match reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(8))
+        .timeout(std::time::Duration::from_secs(25))
+        .no_proxy()
         .build() 
     {
         Ok(c) => c,
@@ -478,7 +688,7 @@ async fn test_provider_connection(
         "model": model,
         "messages": [{"role": "user", "content": "ping"}],
         "max_tokens": 1,
-        "stream": false
+        "stream": true
     });
 
     let start = Instant::now();
@@ -502,7 +712,7 @@ async fn test_provider_connection(
         }
         Err(e) => {
             let err_msg = if e.is_timeout() {
-                "连接超时 (8s)".to_string()
+                "连接超时 (25s)".to_string()
             } else {
                 e.to_string()
             };
@@ -515,14 +725,15 @@ async fn test_provider_in_background(
     app_handle: tauri::AppHandle,
     provider: ProviderConfig,
 ) {
+    let state = app_handle.state::<AppDb>();
+    let effective_base_url = resolve_effective_base_url(&provider, &state);
     let res = test_provider_connection(
-        &provider.base_url,
+        &effective_base_url,
         &provider.api_key,
         &provider.model,
         &provider.api_format,
     ).await;
     
-    let state = app_handle.state::<AppDb>();
     {
         let mut cache = state.health_cache.lock().unwrap();
         cache.insert(provider.id.clone(), (res.ok, res.latency_ms));
@@ -534,7 +745,94 @@ async fn test_provider_in_background(
 
 // ─── Deep Code Settings Helper ───────────────────────────────────────────────
 
-fn apply_to_deepcode_internal(provider: &ProviderConfig, data: &StoredData) -> bool {
+fn apply_to_opencode(provider: &ProviderConfig, effective_base_url: &str) -> bool {
+    // Skip opencode.json sync for the proxy-enabled Tsinghua preset to restore its original behavior
+    if provider.id == "tsinghua-deepseek-r1" {
+        return true;
+    }
+
+    let home = match dirs::home_dir() {
+        Some(path) => path,
+        None => return false,
+    };
+    
+    let config_path = home.join(".config").join("opencode").join("opencode.json");
+    
+    if let Some(parent) = config_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    
+    let mut existing = if config_path.exists() {
+        if let Ok(raw) = fs::read_to_string(&config_path) {
+            serde_json::from_str::<serde_json::Value>(&raw).unwrap_or(serde_json::json!({}))
+        } else {
+            serde_json::json!({})
+        }
+    } else {
+        serde_json::json!({})
+    };
+    
+    if !existing.is_object() {
+        existing = serde_json::json!({});
+    }
+    
+    let is_sensenova = provider.base_url.contains("sensenova");
+    let provider_key = if is_sensenova {
+        "sense-nova".to_string()
+    } else {
+        format!("ds-{}", provider.id.replace(char::is_whitespace, "-").to_lowercase())
+    };
+    
+    let mut providers = existing.get("provider").cloned().unwrap_or(serde_json::json!({}));
+    if !providers.is_object() {
+        providers = serde_json::json!({});
+    }
+    
+    let model_name = provider.model.clone();
+    let new_provider_config = serde_json::json!({
+        "npm": "@ai-sdk/openai-compatible",
+        "name": provider.name.clone(),
+        "options": {
+            "baseURL": effective_base_url,
+            "apiKey": provider.api_key.clone()
+        },
+        "models": {
+            &model_name: {
+                "name": &model_name,
+                "modalities": {
+                    "input": ["text", "image"],
+                    "output": ["text"]
+                },
+                "limit": {
+                    "context": 256000,
+                    "output": 65536
+                }
+            }
+        }
+    });
+    
+    if let Some(providers_obj) = providers.as_object_mut() {
+        providers_obj.insert(provider_key.clone(), new_provider_config);
+    }
+    
+    if let Some(obj) = existing.as_object_mut() {
+        obj.insert("provider".to_string(), providers);
+        let active_model_path = format!("{}/{}", provider_key, model_name);
+        obj.insert("model".to_string(), serde_json::Value::String(active_model_path));
+    }
+    
+    if let Ok(serialized) = serde_json::to_string_pretty(&existing) {
+        fs::write(&config_path, serialized).is_ok()
+    } else {
+        false
+    }
+}
+
+fn apply_to_deepcode_internal(
+    provider: &ProviderConfig,
+    state: &AppDb,
+    data: &StoredData,
+) -> bool {
     let config_path = PathBuf::from(&data.settings.deep_code_config_path);
 
     if let Some(parent) = config_path.parent() {
@@ -560,8 +858,13 @@ fn apply_to_deepcode_internal(provider: &ProviderConfig, data: &StoredData) -> b
         env = serde_json::json!({});
     }
 
+    // For Tsinghua providers, the proxy is started (or reused) here and we
+    // write the proxy URL into Deep Code's settings.json. For everything
+    // else, any running proxy is stopped and the provider's real URL is used.
+    let effective_base_url = resolve_effective_base_url(provider, state);
+
     if let Some(env_obj) = env.as_object_mut() {
-        env_obj.insert("BASE_URL".to_string(), serde_json::Value::String(provider.base_url.clone()));
+        env_obj.insert("BASE_URL".to_string(), serde_json::Value::String(effective_base_url.clone()));
         env_obj.insert("API_KEY".to_string(), serde_json::Value::String(provider.api_key.clone()));
         env_obj.insert("MODEL".to_string(), serde_json::Value::String(provider.model.clone()));
     }
@@ -571,6 +874,9 @@ fn apply_to_deepcode_internal(provider: &ProviderConfig, data: &StoredData) -> b
         obj.insert("thinkingEnabled".to_string(), serde_json::Value::Bool(provider.thinking_enabled));
         obj.insert("reasoningEffort".to_string(), serde_json::Value::String(provider.reasoning_effort.clone()));
     }
+
+    // Write to opencode.json for both SenseNova and other models!
+    let _ = apply_to_opencode(provider, &effective_base_url);
 
     if let Ok(serialized) = serde_json::to_string_pretty(&existing) {
         fs::write(&config_path, serialized).is_ok()
@@ -806,7 +1112,7 @@ fn apply_provider(app_handle: tauri::AppHandle, state: tauri::State<AppDb>, prov
         provider
     };
 
-    if apply_to_deepcode_internal(&plain_provider, &guard) {
+    if apply_to_deepcode_internal(&plain_provider, &state, &guard) {
         guard.settings.active_provider_id = Some(plain_provider.id.clone());
         state.save_locked(&guard);
         
@@ -867,7 +1173,10 @@ async fn test_provider(app_handle: tauri::AppHandle, state: tauri::State<'_, App
         None => return Ok(TestResult { ok: false, latency_ms: 0, error: Some("Provider not found".to_string()), model: None })
     };
 
-    let res = test_provider_connection(&p.base_url, &p.api_key, &p.model, &p.api_format).await;
+    // For Tsinghua, route the test through the local WAF-bypass proxy so the
+    // health check matches what the user will actually see when they apply.
+    let effective_base_url = resolve_effective_base_url(&p, &state);
+    let res = test_provider_connection(&effective_base_url, &p.api_key, &p.model, &p.api_format).await;
     
     {
         let mut cache = state.health_cache.lock().unwrap();
@@ -965,6 +1274,11 @@ fn detect_config(state: tauri::State<AppDb>) -> Option<ProviderConfig> {
 fn get_settings(state: tauri::State<AppDb>) -> AppSettings {
     let guard = state.data.lock().unwrap();
     guard.settings.clone()
+}
+
+#[tauri::command]
+fn open_in_browser(url: String) {
+    open_url(&url);
 }
 
 #[tauri::command]
@@ -1069,7 +1383,8 @@ pub fn run() {
             get_settings,
             save_settings,
             get_deepcode_path,
-            ensure_deepcode_config
+            ensure_deepcode_config,
+            open_in_browser
         ])
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
@@ -1089,7 +1404,7 @@ pub fn run() {
                 let mut guard = state.data.lock().unwrap();
                 if let Some(idx) = guard.providers.iter().position(|p| p.id == provider_id) {
                     let provider = guard.providers[idx].clone();
-                    if apply_to_deepcode_internal(&provider, &guard) {
+                    if apply_to_deepcode_internal(&provider, &state, &guard) {
                         guard.settings.active_provider_id = Some(provider_id.to_string());
                         state.save_locked(&guard);
                         

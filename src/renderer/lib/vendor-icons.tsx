@@ -20,6 +20,7 @@ import {
   Doubao,
   Minimax,
   Qwen,
+  SenseNova,
 } from '@lobehub/icons';
 
 export type Vendor =
@@ -33,7 +34,10 @@ export type Vendor =
   | 'Groq'
   | 'ByteDance (Doubao)'
   | 'MiniMax'
-  | 'Qwen';
+  | 'Qwen'
+  | 'Tsinghua'
+  | 'SenseTime'
+  | 'TsinghuaDirect';
 
 /** Vendor → lobehub icon component. The .Avatar sub-component paints
  *  the official white glyph on the vendor's brand-colored tile and
@@ -56,6 +60,9 @@ export const VENDOR_ICONS: Record<Vendor, { Icon: any }> = {
   'ByteDance (Doubao)': { Icon: Doubao },
   'MiniMax':            { Icon: Minimax },
   'Qwen':               { Icon: Qwen },
+  'Tsinghua':           { Icon: DeepSeek }, // share DeepSeek's mark — same R1 family
+  'SenseTime':          { Icon: SenseNova },
+  'TsinghuaDirect':     { Icon: DeepSeek },
 };
 
 /** Vendor → preset id map. PresetSelector's icon lookup keys on preset
@@ -63,20 +70,25 @@ export const VENDOR_ICONS: Record<Vendor, { Icon: any }> = {
  *  presets (e.g. DeepSeek V4 Pro / Flash / R1 → all resolve to the same
  *  DeepSeek icon). Uses .Color (see VENDOR_ICONS comment for rationale). */
 export const PRESET_ICONS: Record<string, { Icon: any }> = {
-  'deepseek-v4-pro':   { Icon: DeepSeek },
-  'deepseek-v4-flash':  { Icon: DeepSeek },
-  'deepseek-r1':        { Icon: DeepSeek },
-  'kimi-k2.7-code':     { Icon: Kimi },
-  'kimi-for-coding':    { Icon: Kimi },
-  'zhipu-glm':          { Icon: Zhipu },
-  'minimax-cn':         { Icon: Minimax },
-  'minimax-en':         { Icon: Minimax },
-  'doubao-pro':         { Icon: Doubao },
-  'siliconflow':        { Icon: SiliconCloud },
-  'openrouter':         { Icon: OpenRouter },
-  'openai':             { Icon: OpenAI },
-  'groq':               { Icon: Groq },
-  'qwen':               { Icon: Qwen },
+  'deepseek-v4-pro':           { Icon: DeepSeek },
+  'deepseek-v4-flash':         { Icon: DeepSeek },
+  'deepseek-r1':               { Icon: DeepSeek },
+  'kimi-k2.7-code':            { Icon: Kimi },
+  'kimi-for-coding':           { Icon: Kimi },
+  'zhipu-glm':                 { Icon: Zhipu },
+  'minimax-cn':                { Icon: Minimax },
+  'minimax-en':                { Icon: Minimax },
+  'doubao-pro':                { Icon: Doubao },
+  'siliconflow':               { Icon: SiliconCloud },
+  'openrouter':                { Icon: OpenRouter },
+  'openai':                    { Icon: OpenAI },
+  'groq':                      { Icon: Groq },
+  'qwen':                      { Icon: Qwen },
+  'tsinghua-deepseek-r1':      { Icon: DeepSeek },
+  'tsinghua-deepseek-r1-671b': { Icon: DeepSeek },
+  'tsinghua-deepseek-r1-32b':  { Icon: DeepSeek },
+  'sensenova':                 { Icon: SenseNova },
+  'tsinghua-deepseek-direct':  { Icon: DeepSeek },
 };
 
 /** Substring-based vendor detection. Runs on a URL only — never on user
@@ -90,9 +102,11 @@ export function guessVendorFromUrl(baseUrl: string): Vendor | 'Custom' {
   if (u.includes('siliconflow')) return 'SiliconFlow';
   if (u.includes('openrouter')) return 'OpenRouter';
   if (u.includes('volces')) return 'ByteDance (Doubao)';
+  if (u.includes('madmodel') || u.includes('tsinghua')) return 'Tsinghua';
   if (u.includes('moonshot') || u.includes('kimi')) return 'Moonshot (Kimi)';
   if (u.includes('deepseek')) return 'DeepSeek';
   if (u.includes('openai')) return 'OpenAI';
   if (u.includes('groq')) return 'Groq';
+  if (u.includes('sensenova') || u.includes('sensetime')) return 'SenseTime';
   return 'Custom';
 }

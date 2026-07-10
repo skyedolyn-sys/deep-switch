@@ -14,6 +14,7 @@ export interface DeepSwitchAPI {
   saveSettings: (settings: any) => Promise<any>;
   getDeepCodeConfigPath: () => Promise<{ path: string; exists: boolean }>;
   ensureDeepCodeConfig: () => Promise<{ path: string; exists: boolean }>;
+  openInBrowser: (url: string) => Promise<void>;
 }
 
 declare global {
