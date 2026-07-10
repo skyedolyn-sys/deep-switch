@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { useTranslation } from 'react-i18next';
 import { ProviderCard } from './components/ProviderCard';
 import { ProviderDetail } from './components/ProviderDetail';
@@ -84,6 +85,18 @@ export default function App() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    listen('active-provider-changed', () => {
+      refresh();
+    }).then(fn => {
+      unlisten = fn;
+    });
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [refresh]);
 
   useLanguageSync(api, i18n);
 
