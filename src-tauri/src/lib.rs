@@ -9,14 +9,24 @@ use tauri::Manager;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
 
-/// Embedded Tsinghua DeepSeek WAF bypass proxy (Node.js). (Build: 20260710-1906)
+/// Embedded Tsinghua DeepSeek WAF bypass proxy (Node.js).
 /// Spawned as a child process only when the user switches to a Tsinghua provider.
 const TSINGHUA_PROXY_SCRIPT: &str = include_str!("../../scripts/tsinghua-proxy.mjs");
+
+/// Tsinghua preset identifiers. Defined once here so `is_tsinghua` proxy-skip
+/// checks and `apply_to_opencode` filtering share the same source of truth.
+const TSINGHUA_PROXY_PRESET_ID: &str = "tsinghua-deepseek-r1";
+const TSINGHUA_DIRECT_PRESET_ID: &str = "tsinghua-deepseek-direct";
+/// Loopback port the proxy listens on. Hardcoded so Deepcode's settings.json
+/// points to a stable URL that doesn't change when the proxy is respawned.
+const TSINGHUA_PROXY_PORT: u16 = 9527;
 
 /// True if `base_url` points to Tsinghua's madmodel.cs.tsinghua.edu.cn endpoint.
 fn is_tsinghua(base_url: &str) -> bool {
     base_url.contains("madmodel.cs.tsinghua.edu.cn")
 }
+
+// ─── Generic Helpers ─────────────────────────────────────────────────────────
 
 /// Start the local WAF-bypass proxy. Kills any previously-spawned instance first
 /// so that the cached port + child handle always reflect the running process.
@@ -47,16 +57,24 @@ fn start_tsinghua_proxy(state: &AppDb) -> Result<u16, String> {
     fs::write(&script_path, TSINGHUA_PROXY_SCRIPT)
         .map_err(|e| format!("write proxy script: {}", e))?;
 
-    // Clear port 9527 if it's already bound by a stale proxy process
+    // Make sure the proxy-log parent exists too. The proxy mkdir's it lazily
+    // inside Node, but on first start this races — pre-create here.
+    if let Some(parent) = std::path::Path::new(&proxy_log_path()).parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    // Kill any previously-spawned proxy of THIS app by matching the script
+    // name. This avoids killing unrelated processes that happen to listen on
+    // the same loopback port (e.g. a developer's own Node app on 9527).
     #[cfg(not(target_os = "windows"))]
-    let _ = std::process::Command::new("sh")
-        .args(&["-c", "kill -9 $(lsof -t -i:9527) 2>/dev/null || true"])
+    let _ = std::process::Command::new("pkill")
+        .args(&["-f", "tsinghua-proxy.mjs"])
         .status();
 
     let mut child = std::process::Command::new("node")
         .arg(&script_path)
-        .arg("9527") // 9527 = Fixed proxy port to prevent terminal disconnects
-        .env("PROXY_LOG", "/tmp/deep-switch-proxy.log")
+        .arg(TSINGHUA_PROXY_PORT.to_string())
+        .env("PROXY_LOG", proxy_log_path())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())
         .spawn()
@@ -97,7 +115,10 @@ fn start_tsinghua_proxy(state: &AppDb) -> Result<u16, String> {
         .parse()
         .map_err(|e| format!("parse proxy port '{}': {}", port_line, e))?;
 
-    *guard = Some(TsinghuaProxyHandle { port, child });
+    let pid = child.id();
+    println!("[tsinghua-proxy] spawned node pid={} port={}", pid, TSINGHUA_PROXY_PORT);
+
+    *guard = Some(TsinghuaProxyHandle { port, child, pid });
     Ok(port)
 }
 
@@ -107,6 +128,7 @@ fn stop_tsinghua_proxy(state: &AppDb) {
     if let Some(mut h) = guard.take() {
         let _ = h.child.kill();
         let _ = h.child.wait();
+        println!("[tsinghua-proxy] killed pid={}", h.pid);
     }
 }
 
@@ -115,7 +137,7 @@ fn stop_tsinghua_proxy(state: &AppDb) {
 /// proxy and returns `http://127.0.0.1:{port}/v1`. For everything else, it
 /// stops any running proxy and returns the provider's real base URL.
 fn resolve_effective_base_url(provider: &ProviderConfig, state: &AppDb) -> String {
-    if is_tsinghua(&provider.base_url) && provider.id != "tsinghua-deepseek-direct" {
+    if is_tsinghua(&provider.base_url) && provider.id != TSINGHUA_DIRECT_PRESET_ID {
         match start_tsinghua_proxy(state) {
             Ok(port) => format!("http://127.0.0.1:{}/v1", port),
             Err(e) => {
@@ -130,6 +152,43 @@ fn resolve_effective_base_url(provider: &ProviderConfig, state: &AppDb) -> Strin
         stop_tsinghua_proxy(state);
         provider.base_url.clone()
     }
+}
+
+// ─── Generic Helpers ─────────────────────────────────────────────────────────
+
+/// Load a JSON file or return an empty object. Used by both the deepcode.json
+/// sync and the opencode.json sync — both follow the "preserve user's other
+/// keys we don't own" pattern by reading, mutating, and rewriting.
+fn load_json_or_default(path: &Path) -> serde_json::Value {
+    if path.exists() {
+        fs::read_to_string(path)
+            .ok()
+            .and_then(|raw| serde_json::from_str(&raw).ok())
+            .unwrap_or_else(|| serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    }
+}
+
+/// Build a `reqwest::Client` that ignores system proxy settings. Shared by
+/// `test_provider_connection` and `fetch_models` so both follow the same
+/// "directly hit the API endpoint" guarantee.
+fn build_http_client(timeout_secs: u64) -> reqwest::Result<reqwest::Client> {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(timeout_secs))
+        .no_proxy()
+        .build()
+}
+
+/// Resolved path for the proxy's diagnostic log. Lives in the user-owned
+/// `~/.deep-switch/` directory so it can be chmod'd 0600 and never ends up
+/// world-readable on shared systems.
+fn proxy_log_path() -> String {
+    let home = match dirs::home_dir() {
+        Some(path) => path.join(".deep-switch"),
+        None => std::path::PathBuf::from("/tmp"),
+    };
+    home.join("proxy.log").to_string_lossy().to_string()
 }
 
 // ─── Data Structs ────────────────────────────────────────────────────────────
@@ -260,6 +319,7 @@ pub struct AppDb {
 pub struct TsinghuaProxyHandle {
     pub port: u16,
     pub child: std::process::Child,
+    pub pid: u32,
 }
 
 impl AppDb {
@@ -668,11 +728,7 @@ async fn test_provider_connection(
         format!("{}/v1/chat/completions", base)
     };
     
-    let client = match reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(25))
-        .no_proxy()
-        .build() 
-    {
+    let client = match build_http_client(25) {
         Ok(c) => c,
         Err(e) => return TestResult { ok: false, latency_ms: 0, error: Some(e.to_string()), model: Some(model.to_string()) }
     };
@@ -747,7 +803,7 @@ async fn test_provider_in_background(
 
 fn apply_to_opencode(provider: &ProviderConfig, effective_base_url: &str) -> bool {
     // Skip opencode.json sync for the proxy-enabled Tsinghua preset to restore its original behavior
-    if provider.id == "tsinghua-deepseek-r1" {
+    if provider.id == TSINGHUA_PROXY_PRESET_ID {
         return true;
     }
 
@@ -762,20 +818,12 @@ fn apply_to_opencode(provider: &ProviderConfig, effective_base_url: &str) -> boo
         let _ = fs::create_dir_all(parent);
     }
     
-    let mut existing = if config_path.exists() {
-        if let Ok(raw) = fs::read_to_string(&config_path) {
-            serde_json::from_str::<serde_json::Value>(&raw).unwrap_or(serde_json::json!({}))
-        } else {
-            serde_json::json!({})
-        }
-    } else {
-        serde_json::json!({})
-    };
-    
+    let mut existing = load_json_or_default(&config_path);
+
     if !existing.is_object() {
         existing = serde_json::json!({});
     }
-    
+
     let is_sensenova = provider.base_url.contains("sensenova");
     let provider_key = if is_sensenova {
         "sense-nova".to_string()
@@ -839,15 +887,7 @@ fn apply_to_deepcode_internal(
         let _ = fs::create_dir_all(parent);
     }
 
-    let mut existing = if config_path.exists() {
-        if let Ok(raw) = fs::read_to_string(&config_path) {
-            serde_json::from_str::<serde_json::Value>(&raw).unwrap_or(serde_json::json!({}))
-        } else {
-            serde_json::json!({})
-        }
-    } else {
-        serde_json::json!({})
-    };
+    let mut existing = load_json_or_default(&config_path);
 
     if !existing.is_object() {
         existing = serde_json::json!({});
@@ -1194,10 +1234,7 @@ async fn fetch_models(base_url: String, api_key: String) -> Result<serde_json::V
     let base = base_url.trim_end_matches('/').trim_end_matches("/v1");
     let url = format!("{}/v1/models", base);
     
-    let client = match reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(8))
-        .build() 
-    {
+    let client = match build_http_client(8) {
         Ok(c) => c,
         Err(e) => return Ok(serde_json::json!({ "ok": false, "error": e.to_string() }))
     };

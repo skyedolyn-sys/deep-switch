@@ -68,7 +68,12 @@ export const VENDOR_ICONS: Record<Vendor, { Icon: any }> = {
 /** Vendor → preset id map. PresetSelector's icon lookup keys on preset
  *  id (not vendor string) because the same vendor can ship multiple
  *  presets (e.g. DeepSeek V4 Pro / Flash / R1 → all resolve to the same
- *  DeepSeek icon). Uses .Color (see VENDOR_ICONS comment for rationale). */
+ *  DeepSeek icon). Uses .Color (see VENDOR_ICONS comment for rationale).
+ *
+ *  Keys MUST match the preset `id` values returned from
+ *  `src-tauri/src/lib.rs::get_builtin_presets()`. Add an entry when you
+ *  add a preset. Drop the entry when you remove one — orphan keys
+ *  accumulate silently and inflate the bundle. */
 export const PRESET_ICONS: Record<string, { Icon: any }> = {
   'deepseek-v4-pro':           { Icon: DeepSeek },
   'deepseek-v4-flash':         { Icon: DeepSeek },
@@ -76,17 +81,11 @@ export const PRESET_ICONS: Record<string, { Icon: any }> = {
   'kimi-k2.7-code':            { Icon: Kimi },
   'kimi-for-coding':           { Icon: Kimi },
   'zhipu-glm':                 { Icon: Zhipu },
-  'minimax-cn':                { Icon: Minimax },
-  'minimax-en':                { Icon: Minimax },
-  'doubao-pro':                { Icon: Doubao },
   'siliconflow':               { Icon: SiliconCloud },
   'openrouter':                { Icon: OpenRouter },
   'openai':                    { Icon: OpenAI },
   'groq':                      { Icon: Groq },
-  'qwen':                      { Icon: Qwen },
   'tsinghua-deepseek-r1':      { Icon: DeepSeek },
-  'tsinghua-deepseek-r1-671b': { Icon: DeepSeek },
-  'tsinghua-deepseek-r1-32b':  { Icon: DeepSeek },
   'sensenova':                 { Icon: SenseNova },
   'tsinghua-deepseek-direct':  { Icon: DeepSeek },
 };

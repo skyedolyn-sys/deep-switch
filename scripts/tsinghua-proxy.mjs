@@ -55,6 +55,24 @@ function cleanRequestPayload(body) {
   }
 }
 
+/**
+ * Detect the connection-probe request from `test_provider_connection` —
+ * Rust sends `max_tokens: 1` as a tiniest-possible chat completion. We
+ * recognize it to bypass the WAF-inspection logic that would otherwise
+ * race against the test's own 25-second timeout.
+ *
+ * NOTE: heuristic. A legitimate user request with `max_tokens: 1` would
+ * also be marked as a probe. Replacing with a dedicated header is the
+ * right altitude, but is out of scope for the simplify pass.
+ */
+function isConnectionTest(bodyBuf) {
+  try {
+    return JSON.parse(bodyBuf.toString('utf8')).max_tokens === 1;
+  } catch (_) {
+    return false;
+  }
+}
+
 function extractToolCall(text) {
   let jsonStr = '';
   const markdownMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/);
@@ -333,6 +351,102 @@ function proxyLog(msg) {
   try { _logAppend(LOG_FILE, msg + '\n'); } catch (e) {}
 }
 
+/**
+ * Pipe an upstream SSE stream through `processStreamLine` into `res`,
+ * consuming any pre-buffered `firstChunk` first. On stream end, emit
+ * one final chunk: tool_call if `extractToolCall` finds one, else the
+ * accumulated content with `finish_reason: stop`. Always emits `[DONE]`.
+ *
+ * Shared by both the client-streaming branch (line 380+) and the
+ * upstream-returns-stream branch (line 660+) so a fix in either place
+ * applies to both.
+ */
+function pipeSseStream(stream, res, firstChunk) {
+  let buffer = '';
+  const state = {
+    inThinkingMode: false,
+    contentBuffer: '',
+    lastChunkObj: null,
+  };
+
+  const flushLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('data: ')) return;
+    const processedLine = processStreamLine(trimmed, state);
+    if (processedLine) {
+      res.write(processedLine + '\n\n');
+    }
+  };
+
+  const handleDataChunk = chunk => {
+    const chunkStr = chunk.toString('utf8');
+    buffer += chunkStr;
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) flushLine(line);
+  };
+
+  if (firstChunk) handleDataChunk(firstChunk);
+  stream.on('data', handleDataChunk);
+
+  stream.on('end', () => {
+    flushLine(buffer);
+
+    const finalContent = state.contentBuffer;
+    const template = state.lastChunkObj || {
+      id: 'chatcmpl-' + crypto.randomUUID(),
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: 'DeepSeek-R1-671B',
+    };
+
+    if (finalContent) {
+      const toolCallInfo = extractToolCall(finalContent);
+      if (toolCallInfo) {
+        if (toolCallInfo.leadingText) {
+          res.write('data: ' + JSON.stringify({
+            ...template,
+            choices: [{ index: 0, delta: { content: toolCallInfo.leadingText }, finish_reason: null }],
+          }) + '\n\n');
+        }
+        res.write('data: ' + JSON.stringify({
+          ...template,
+          choices: [{
+            index: 0,
+            delta: {
+              tool_calls: toolCallInfo.toolCalls.map(tc => ({
+                index: tc.index,
+                id: 'call_' + crypto.randomUUID().substring(0, 9),
+                type: 'function',
+                function: { name: tc.name, arguments: tc.arguments },
+              })),
+            },
+            finish_reason: 'tool_calls',
+          }],
+        }) + '\n\n');
+      } else {
+        res.write('data: ' + JSON.stringify({
+          ...template,
+          choices: [{ index: 0, delta: { content: finalContent }, finish_reason: 'stop' }],
+        }) + '\n\n');
+      }
+    } else {
+      res.write('data: ' + JSON.stringify({
+        ...template,
+        choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+      }) + '\n\n');
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  });
+
+  stream.on('error', err => {
+    proxyLog(`[proxy] stream error: ${err.message}`);
+    res.end();
+  });
+}
+
 const server = createServer(async (req, res) => {
   proxyLog(`[proxy] ${req.method} ${req.url} from ${req.socket.remoteAddress}:${req.socket.remotePort}`);
   const chunks = [];
@@ -402,15 +516,7 @@ const server = createServer(async (req, res) => {
           }
 
           if (result.status === 200 && result.stream) {
-            let isConnectionTest = false;
-            try {
-              const parsedBody = JSON.parse(modified.toString('utf8'));
-              if (parsedBody.max_tokens === 1) {
-                isConnectionTest = true;
-              }
-            } catch (e) {}
-
-            if (isConnectionTest) {
+            if (isConnectionTest(modified)) {
               result.stream.on('data', c => res.write(c));
               result.stream.on('end', () => res.end());
               success = true;
@@ -429,129 +535,7 @@ const server = createServer(async (req, res) => {
             }
             
             success = true;
-            let buffer = '';
-            const state = { 
-              inThinkingMode: false,
-              contentBuffer: '',
-              lastChunkObj: null
-            };
-
-            const handleDataChunk = chunk => {
-              const chunkStr = chunk.toString('utf8');
-              proxyLog(`[proxy] received chunk ${chunkStr.length}B: ${chunkStr.slice(0, 100)}`);
-              buffer += chunkStr;
-              const lines = buffer.split('\n');
-              buffer = lines.pop();
-
-              for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('data: ')) {
-                  const processedLine = processStreamLine(trimmed, state);
-                  if (processedLine) {
-                    res.write(processedLine + '\n\n');
-                  }
-                }
-              }
-            };
-
-            if (inspection.firstChunk) {
-              handleDataChunk(inspection.firstChunk);
-            }
-
-            result.stream.on('data', handleDataChunk);
-
-            result.stream.on('end', () => {
-              proxyLog(`[proxy] stream end, remaining buffer=${buffer}`);
-              const trimmed = buffer.trim();
-              if (trimmed.startsWith('data: ')) {
-                const processedLine = processStreamLine(trimmed, state);
-                if (processedLine) {
-                  res.write(processedLine + '\n\n');
-                }
-              }
-              
-              const finalContent = state.contentBuffer;
-              proxyLog(`[proxy] stream finished, contentBuffer="${finalContent}"`);
-              
-              if (finalContent) {
-                const toolCallInfo = extractToolCall(finalContent);
-                const template = state.lastChunkObj || {
-                  id: 'chatcmpl-' + crypto.randomUUID(),
-                  object: 'chat.completion.chunk',
-                  created: Math.floor(Date.now() / 1000),
-                  model: 'DeepSeek-R1-671B'
-                };
-                
-                if (toolCallInfo) {
-                  proxyLog(`[proxy] extracted tool calls count=${toolCallInfo.toolCalls.length}`);
-                  if (toolCallInfo.leadingText) {
-                    const leadChunk = {
-                      ...template,
-                      choices: [{
-                        index: 0,
-                        delta: { content: toolCallInfo.leadingText },
-                        finish_reason: null
-                      }]
-                    };
-                    res.write('data: ' + JSON.stringify(leadChunk) + '\n\n');
-                  }
-                  
-                  const toolChunk = {
-                    ...template,
-                    choices: [{
-                      index: 0,
-                      delta: {
-                        tool_calls: toolCallInfo.toolCalls.map(tc => ({
-                          index: tc.index,
-                          id: 'call_' + crypto.randomUUID().substring(0, 9),
-                          type: 'function',
-                          function: {
-                            name: tc.name,
-                            arguments: tc.arguments
-                          }
-                        }))
-                      },
-                      finish_reason: 'tool_calls'
-                    }]
-                  };
-                  res.write('data: ' + JSON.stringify(toolChunk) + '\n\n');
-                } else {
-                  const normalChunk = {
-                    ...template,
-                    choices: [{
-                      index: 0,
-                      delta: { content: finalContent },
-                      finish_reason: 'stop'
-                    }]
-                  };
-                  res.write('data: ' + JSON.stringify(normalChunk) + '\n\n');
-                }
-              } else {
-                const template = state.lastChunkObj || {
-                  id: 'chatcmpl-' + crypto.randomUUID(),
-                  object: 'chat.completion.chunk',
-                  created: Math.floor(Date.now() / 1000),
-                  model: 'DeepSeek-R1-671B'
-                };
-                const stopChunk = {
-                  ...template,
-                  choices: [{
-                    index: 0,
-                    delta: {},
-                    finish_reason: 'stop'
-                  }]
-                };
-                res.write('data: ' + JSON.stringify(stopChunk) + '\n\n');
-              }
-              
-              res.write('data: [DONE]\n\n');
-              res.end();
-            });
-
-            result.stream.on('error', err => {
-              proxyLog(`[proxy] stream error: ${err.message}`);
-              res.end();
-            });
+            pipeSseStream(result.stream, res, inspection.firstChunk);
             break;
           }
         } catch (e) {
@@ -588,17 +572,7 @@ const server = createServer(async (req, res) => {
 
         // For 200 OK stream responses, inspect the first chunk for "server busy" errors (skip for connection tests)
         if (result.status === 200 && result.stream && req.method === 'POST' && req.url.includes('/chat/completions')) {
-          let isConnectionTest = false;
-          try {
-            const parsedBody = JSON.parse(modified.toString('utf8'));
-            if (parsedBody.max_tokens === 1) {
-              isConnectionTest = true;
-            }
-          } catch (e) {
-            // ignore
-          }
-
-          if (!isConnectionTest) {
+          if (!isConnectionTest(modified)) {
             const inspection = await inspectStreamFirstChunk(result.stream);
             if (inspection.isError) {
               proxyLog(`[proxy] attempt#${attempt} returned server busy error in stream, retrying...`);
@@ -634,135 +608,7 @@ const server = createServer(async (req, res) => {
           proxyLog(`[proxy] isChatCompletion=true content-type="${contentType}" isStream=${isStream}`);
 
           if (isStream) {
-            let buffer = '';
-            const state = { 
-              inThinkingMode: false,
-              contentBuffer: '',
-              lastChunkObj: null
-            };
-
-            const handleDataChunk = chunk => {
-              const chunkStr = chunk.toString('utf8');
-              proxyLog(`[proxy] received chunk ${chunkStr.length}B: ${chunkStr.slice(0, 100)}`);
-              buffer += chunkStr;
-              const lines = buffer.split('\n');
-              buffer = lines.pop();
-
-              for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('data: ')) {
-                  const processedLine = processStreamLine(trimmed, state);
-                  if (processedLine) {
-                    proxyLog(`[proxy] stream line processed: ${processedLine.slice(0, 100)}`);
-                    res.write(processedLine + '\n\n'); // Terminate SSE event frame with double newlines!
-                  }
-                }
-              }
-            };
-
-            if (firstChunk) {
-              handleDataChunk(firstChunk);
-            }
-
-            result.stream.on('data', handleDataChunk);
-
-            result.stream.on('end', () => {
-              proxyLog(`[proxy] stream end, remaining buffer=${buffer}`);
-              const trimmed = buffer.trim();
-              if (trimmed.startsWith('data: ')) {
-                const processedLine = processStreamLine(trimmed, state);
-                if (processedLine) {
-                  res.write(processedLine + '\n\n');
-                }
-              }
-              
-              // Flush buffered content / tool calls
-              const finalContent = state.contentBuffer;
-              proxyLog(`[proxy] stream finished, contentBuffer="${finalContent}"`);
-              
-              if (finalContent) {
-                const toolCallInfo = extractToolCall(finalContent);
-                const template = state.lastChunkObj || {
-                  id: 'chatcmpl-' + crypto.randomUUID(),
-                  object: 'chat.completion.chunk',
-                  created: Math.floor(Date.now() / 1000),
-                  model: 'DeepSeek-R1-671B'
-                };
-
-                if (toolCallInfo) {
-                  proxyLog(`[proxy] extracted tool calls count=${toolCallInfo.toolCalls.length}`);
-                  // 1. Send leading text if any
-                  if (toolCallInfo.leadingText) {
-                    const leadChunk = {
-                      ...template,
-                      choices: [{
-                        index: 0,
-                        delta: { content: toolCallInfo.leadingText },
-                        finish_reason: null
-                      }]
-                    };
-                    res.write('data: ' + JSON.stringify(leadChunk) + '\n\n');
-                  }
-                  
-                  // 2. Send the tool calls with finish_reason: 'tool_calls'
-                  const toolChunk = {
-                    ...template,
-                    choices: [{
-                      index: 0,
-                      delta: {
-                        tool_calls: toolCallInfo.toolCalls.map(tc => ({
-                          index: tc.index,
-                          id: 'call_' + crypto.randomUUID().substring(0, 9),
-                          type: 'function',
-                          function: {
-                            name: tc.name,
-                            arguments: tc.arguments
-                          }
-                        }))
-                      },
-                      finish_reason: 'tool_calls'
-                    }]
-                  };
-                  res.write('data: ' + JSON.stringify(toolChunk) + '\n\n');
-                } else {
-                  // No tool call, just send the content normally with finish_reason: 'stop'
-                  const normalChunk = {
-                    ...template,
-                    choices: [{
-                      index: 0,
-                      delta: { content: finalContent },
-                      finish_reason: 'stop'
-                    }]
-                  };
-                  res.write('data: ' + JSON.stringify(normalChunk) + '\n\n');
-                }
-              } else {
-                // Send stop event if there is no content
-                const template = state.lastChunkObj || {
-                  id: 'chatcmpl-' + crypto.randomUUID(),
-                  object: 'chat.completion.chunk',
-                  created: Math.floor(Date.now() / 1000),
-                  model: 'DeepSeek-R1-671B'
-                };
-                const stopChunk = {
-                  ...template,
-                  choices: [{
-                    index: 0,
-                    delta: {},
-                    finish_reason: 'stop'
-                  }]
-                };
-                res.write('data: ' + JSON.stringify(stopChunk) + '\n\n');
-              }
-              
-              res.write('data: [DONE]\n\n');
-              res.end();
-            });
-
-            result.stream.on('error', err => {
-              proxyLog(`[proxy] stream error: ${err.message}`);
-              res.end();
-            });
+            pipeSseStream(result.stream, res, firstChunk);
           } else {
             // Non-streaming response, buffer it
             proxyLog(`[proxy] non-stream branch`);

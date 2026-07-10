@@ -1,10 +1,27 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProviderCard } from './components/ProviderCard';
 import { ProviderDetail } from './components/ProviderDetail';
 import { PresetSelector } from './components/PresetSelector';
 import { BackgroundGrid } from './components/BackgroundGrid';
 import { Sparkle } from './components/Sparkle';
+
+/** Sync i18n language from the backend's saved preference. Falls back to
+ *  the system locale, then to English, when no preference is recorded. */
+function useLanguageSync(
+  api: { getSettings: () => Promise<{ preferredLanguage?: string } | null> },
+  i18n: { changeLanguage: (lng: string) => unknown }
+) {
+  useEffect(() => {
+    api.getSettings().then((s) => {
+      const preferred = s?.preferredLanguage;
+      const resolved = (preferred === 'zh' || preferred === 'en')
+        ? preferred
+        : (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en');
+      void i18n.changeLanguage(resolved);
+    });
+  }, [api, i18n]);
+}
 
 export interface Provider {
   id: string;
@@ -68,22 +85,13 @@ export default function App() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Sync preferred language from backend on mount
-  useEffect(() => {
-    api.getSettings().then((s) => {
-      const lang = s?.preferredLanguage;
-      if (lang === 'zh' || lang === 'en') {
-        void i18n.changeLanguage(lang);
-      } else {
-        const systemLang = navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
-        void i18n.changeLanguage(systemLang);
-      }
-    });
-  }, [api, i18n]);
+  useLanguageSync(api, i18n);
 
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flash = (msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    toastTimer.current = setTimeout(() => setToast(null), 2200);
   };
 
   /** Apply = set active AND write to ~/.deepcode/settings.json in one step. */
@@ -192,10 +200,10 @@ export default function App() {
     }
   };
 
-  const handleDeleteFromDetail = async (id: string) => {
-    await api.deleteProvider(id);
-    setSelectedProviderId(null);
-    await refresh();
+  const handleDeleteFromDetail = (id: string) => {
+    // Reuse the same confirmation flow as the list-card delete button
+    // so detail-panel users get the same "are you sure?" protection.
+    handleDelete(id);
   };
 
   const selectedProvider = selectedProviderId
@@ -376,7 +384,11 @@ export default function App() {
                   className="btn btn-primary"
                   style={{ backgroundColor: 'var(--red)', borderColor: 'var(--red)' }}
                   onClick={async () => {
-                    await api.deleteProvider(deleteConfirmId);
+                    const idToDelete = deleteConfirmId;
+                    if (idToDelete === selectedProviderId) {
+                      setSelectedProviderId(null);
+                    }
+                    await api.deleteProvider(idToDelete);
                     setDeleteConfirmId(null);
                     await refresh();
                   }}
