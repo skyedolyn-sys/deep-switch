@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-07-10
+
+### Changed
+
+- **Regenerated v0.1.0 release** with the latest main (commit 6886d90). Includes the tray hide-on-close fix, active-provider-changed event sync, all presets since v0.1.0 (清华 DeepSeek-R1 with 671B/32B model selector, 商汤 SenseNova), connection-test fast path, SSE warning chunks during retry, and the ♻️ refactor of the Tsinghua proxy stream handler + shared Rust helpers.
+- **Added Windows + Linux bundles** to the release (previously mac-only). The release.yml GitHub Actions workflow now produces .msi/.exe (Windows) and .deb/.AppImage (Linux) alongside the mac .dmg/.zip.
+
 ## [0.1.0] - 2026-07-09
 
 ### Added
