@@ -37,3 +37,9 @@ node_modules/
 # Python pycache
 __pycache__/
 *.pyc
+
+# Local scratch / probe scripts — never commit
+scratch/
+
+# Local Claude/job harness state
+.dmux-hooks/

@@ -1,0 +1,18 @@
+# GitHub Linguist configuration
+# Keep the Languages bar focused on the app itself (Rust backend + React
+# renderer), not helper scripts or lockfiles.
+
+# Build / release / WAF-helper scripts — ship with the repo but are not part of
+# the shipped application, so exclude from the Languages summary.
+scripts/* linguist-generated=true
+
+# Local scratch / probe scripts — never committed, but keep them undetectable
+# in case one lands by accident.
+scratch/* linguist-detectable=false
+
+# Lockfiles are machine-generated.
+Cargo.lock linguist-generated=true
+package-lock.json linguist-generated=true
+
+# OS / editor noise if any slips in.
+.DS_Store linguist-detectable=false
