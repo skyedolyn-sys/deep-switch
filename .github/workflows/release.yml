@@ -72,13 +72,25 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
+      - name: Zip the .app (macOS)
+        # Tauri only emits a .dmg on macOS, but the README also advertises a
+        # raw .zip of the .app bundle. Produce it here so the release asset
+        # list matches the docs. ditto keeps macOS metadata/resource forks.
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          cd src-tauri/target/release/bundle/macos
+          VERSION=$(grep -m1 '^version' ../../../../Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          ditto -c -k --sequesterRsrc --keepParent deep-switch.app "deep-switch_${VERSION}_aarch64.zip"
+          ls -la *.zip
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: deep-switch-${{ matrix.platform }}-${{ matrix.args }}
           path: |
             src-tauri/target/release/bundle/macos/*.dmg
-            src-tauri/target/release/bundle/macos/*.app
+            src-tauri/target/release/bundle/macos/*.zip
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
