@@ -9,6 +9,12 @@
 
 **Latest stable:** [v0.1.0](../../releases/latest)
 
+**macOS — recommended (no Gatekeeper prompts, auto-updates with `brew upgrade`):**
+
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
 | Platform | Download | Size |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
@@ -18,7 +24,11 @@
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **The macOS build is ad-hoc signed with hardened runtime, but not notarized.** Apple Silicon users on macOS 15 Sequoia should see no Gatekeeper prompt. On older macOS, or if Gatekeeper still blocks, run once: `xattr -cr /Applications/deep-switch.app` then re-launch from Finder (right-click → **Open** if it still complains). We will switch to a notarized release once we have a verified Apple Developer ID.
+> ⚠️ **Manual macOS install (dmg/zip): the build is ad-hoc signed, not notarized,** so macOS may report the app as "damaged" on first launch. Don't trash it — the download is fine. Either:
+> 1. **Double-click `双击我解除限制.command` inside the dmg / unzipped folder** (no Terminal typing needed), or
+> 2. run once in Terminal: `xattr -cr /Applications/deep-switch.app`, then re-launch.
+>
+> The Homebrew cask does this automatically — that's why it's the recommended path. We will switch to a notarized release once we have a verified Apple Developer ID.
 >
 > Linux: AppImage is portable (no install); `.deb` for Debian/Ubuntu. Windows: MSI for system-wide install, NSIS `.exe` for portable per-user.
 

@@ -8,6 +8,12 @@
 
 **最新穩定版:** [v0.1.0](../../releases/latest)
 
+**macOS 建議安裝方式（無 Gatekeeper 彈窗，日後 `brew upgrade` 即可升級）:**
+
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
 | 平臺 | 下載 | 大小 |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
@@ -17,9 +23,13 @@
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **macOS 建構採用 ad-hoc 簽名並啟用了 hardened runtime,但尚未通過公證。** Apple Silicon 使用者在 macOS 15 Sequoia 上通常不會看到 Gatekeeper 提示。在較舊的 macOS 上,或若 Gatekeeper 仍擋下時,請執行一次:`xattr -cr /Applications/deep-switch.app` 然後從 Finder 重新啟動(若仍有問題請右鍵 → **打開**)。等我們拿到經驗證的 Apple Developer ID 之後,會切換為公證版本。
+> ⚠️ **手動安裝 macOS 版（dmg/zip）：建構採用 ad-hoc 簽名、未經公證，** 首次開啟可能被系統誤報為「已損毀」。別刪，檔案沒壞，任選其一解除限制：
+> 1. **雙擊 dmg / 解壓目錄裡的【双击我解除限制.command】**（不用開終端機敲指令），或
+> 2. 終端機執行一次 `xattr -cr /Applications/deep-switch.app`，再重新開啟。
 >
-> Linux:AppImage 可攜免安裝;`.deb` 適用於 Debian / Ubuntu。Windows:MSI 為系統層級安裝,NSIS `.exe` 為可攜單使用者版。
+> Homebrew cask 會自動完成這一步——所以它是建議的安裝方式。等我們拿到經驗證的 Apple Developer ID 之後，會切換為公證版本。
+>
+> Linux:AppImage 可攜免安裝;`.deb` 適用於 Debian / Ubuntu。Windows:MSI 為系統層級安裝，NSIS `.exe` 為可攜單使用者版。
 
 ---
 

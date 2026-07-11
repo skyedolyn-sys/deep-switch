@@ -9,6 +9,12 @@
 
 **最新安定版:** [v0.1.0](../../releases/latest)
 
+**macOS の推奨インストール方法（Gatekeeper の警告なし、`brew upgrade` で更新可能）:**
+
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
 | プラットフォーム | ダウンロード | サイズ |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
@@ -18,7 +24,11 @@
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **macOS 版はアドホック署名 + ハードニングランタイムですが、公証はされていません。** macOS 15 Sequoia の Apple Silicon ユーザーであれば Gatekeeper のプロンプトは出ないはずです。古い macOS や、それでも Gatekeeper にブロックされる場合は、一度だけ `xattr -cr /Applications/deep-switch.app` を実行し、Finder から再起動してください(それでもダメなら右クリック → **開く**)。検証済みの Apple Developer ID が取得でき次第、公証済みリリースに切り替えます。
+> ⚠️ **macOS 版の手動インストール（dmg/zip）：ビルドはアドホック署名で公証されていないため、** 初回起動時に「壊れているため開けません」と誤表示されることがあります。削除しないでください — ファイルは正常です。どちらかで解除できます：
+> 1. **dmg / 解凍フォルダ内の【双击我解除限制.command】をダブルクリック**（ターミナル操作不要）、または
+> 2. ターミナルで一度 `xattr -cr /Applications/deep-switch.app` を実行してから再度起動。
+>
+> Homebrew cask はこの手順を自動で行います — そのため推奨インストール方法です。検証済みの Apple Developer ID が取得でき次第、公証済みリリースに切り替えます。
 >
 > Linux: AppImage はインストール不要のポータブル形式、`.deb` は Debian/Ubuntu 用。Windows: MSI はシステム全体へのインストール、NSIS `.exe` はユーザー単位のポータブル形式です。
 

@@ -9,6 +9,12 @@
 
 **최신 안정판:** [v0.1.0](../../releases/latest)
 
+**macOS 권장 설치 방법（Gatekeeper 경고 없음, `brew upgrade`로 업데이트 가능）:**
+
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
 | 플랫폼 | 다운로드 | 크기 |
 |---|---|---|
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
@@ -18,7 +24,11 @@
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
-> ⚠️ **macOS 빌드는 하드닝 런타임으로 애드혹 서명되었지만, 공증은 되어 있지 않습니다.** Apple Silicon 사용자가 macOS 15 Sequoia를 쓴다면 Gatekeeper 경고가 뜨지 않을 것입니다. 그 이하 버전이거나 Gatekeeper가 여전히 차단한다면, 한 번 실행 후: `xattr -cr /Applications/deep-switch.app`를 실행한 다음 Finder에서 다시 실행해 주세요(여전히 문제가 있다면 우클릭 → **열기**). 검증된 Apple Developer ID를 확보하는 대로 공증된 릴리스로 전환할 예정입니다.
+> ⚠️ **macOS 수동 설치(dmg/zip): 빌드는 애드혹 서명으로 공증되어 있지 않아** 첫 실행 시 「손상되어 열 수 없습니다」라고 오표시될 수 있습니다. 삭제하지 마세요 — 파일은 정상입니다. 둘 중 하나로 해제할 수 있습니다:
+> 1. **dmg / 압축 해제 폴더의 【双击我解除限制.command】를 더블클릭**(터미널 입력 불필요), 또는
+> 2. 터미널에서 한 번 `xattr -cr /Applications/deep-switch.app` 실행 후 다시 열기.
+>
+> Homebrew cask는 이 단계를 자동으로 처리합니다 — 그래서 권장 설치 방법입니다. 검증된 Apple Developer ID를 확보하는 대로 공증된 릴리스로 전환할 예정입니다.
 >
 > Linux: AppImage는 설치 없이 그대로 실행 가능한 포터블 포맷이고, `.deb`는 Debian/Ubuntu용입니다. Windows: MSI는 시스템 전역 설치용, NSIS `.exe`는 사용자별 포터블 설치용입니다.
 
