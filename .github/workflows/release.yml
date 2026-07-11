@@ -26,12 +26,30 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Resolve the tag's CURRENT target, not the event's github.sha — the
+          # latter can be stale when a tag is force-moved and the push event
+          # carries the pre-move SHA, which is what shipped a stale binary.
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Rust cache (isolated per commit)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # Keyed to the exact commit so a cache from an older source tree can
+          # never be reused for a newer tag build.
+          shared-key: ${{ github.sha }}
+
+      - name: Clean stale bundle artifacts
+        # Defensive: never let a previous bundle survive into this package.
+        run: rm -rf src-tauri/target/release/bundle dist
 
       - name: Install system deps (Linux)
         if: matrix.platform == 'ubuntu-22.04'
