@@ -15,7 +15,7 @@
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
 | macOS (Intel) | [`deep-switch_0.1.0_x64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64.dmg) | ~5 MB |
 | Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
-| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~7 MB |
+| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~80 MB |
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
@@ -147,7 +147,14 @@ Download the latest `.dmg` from the [Releases](../../releases) page and drag **D
 
 ### Linux & Windows
 
-First-party installers are now available — see the [Download](#download) table at the top. If you'd rather run from source:
+First-party installers are now available — see the [Download](#download) table at the top.
+
+**Linux — which file?**
+
+- **`.deb`** (Debian / Ubuntu): ~4 MB, system-wide install, requires `sudo`. Pulls WebKitGTK from your system via `apt`. Install with `sudo dpkg -i deep-switch_0.1.0_amd64.deb` (or double-click in most desktop file managers).
+- **`.AppImage`** (any distro, no root): ~80 MB, fully self-contained — bundles its own WebKitGTK so it runs on Arch / Fedora / openSUSE without installing extra system libraries. Just `chmod +x deep-switch_0.1.0_amd64.AppImage && ./deep-switch_0.1.0_amd64.AppImage`, or double-click. The size is the cost of portability: every dependency travels inside the file.
+
+If you'd rather run from source:
 
 ```bash
 git clone https://github.com/skyedolyn-sys/deep-switch.git

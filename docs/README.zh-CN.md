@@ -14,7 +14,7 @@
 | macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
 | macOS (Intel) | [`deep-switch_0.1.0_x64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64.dmg) | ~5 MB |
 | Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
-| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~7 MB |
+| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~80 MB |
 | Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
 | Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
 
@@ -137,7 +137,14 @@ Deep Switch 把这些全部收拢成一次点击。
 
 ### Linux 与 Windows
 
-官方安装包现已发布——参见页面顶部的 [下载](#下载--download) 表。如果更想从源码运行:
+官方安装包现已发布——参见页面顶部的 [下载](#下载--download) 表。
+
+**Linux 用哪个文件?**
+
+- **`.deb`**(Debian / Ubuntu):约 4 MB,系统级安装,需要 `sudo`,通过 `apt` 借用系统已有的 WebKitGTK。安装命令:`sudo dpkg -i deep-switch_0.1.0_amd64.deb`(多数桌面文件管理器也可双击安装)。
+- **`.AppImage`**(任意发行版,无需 root):约 80 MB,完全自包含——把 WebKitGTK 一并打包,因此 Arch / Fedora / openSUSE 上无需额外安装系统库即可运行。用法:`chmod +x deep-switch_0.1.0_amd64.AppImage && ./deep-switch_0.1.0_amd64.AppImage`,或直接双击。体积是可移植性的代价——所有依赖都随车携带。
+
+如果更想从源码运行:
 
 ```bash
 git clone https://github.com/skyedolyn-sys/deep-switch.git
