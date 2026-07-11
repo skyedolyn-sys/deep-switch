@@ -1,6 +1,6 @@
 {
   "name": "deep-switch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "API provider switcher for Deep Code — connect any LLM vendor to Deep Code CLI",
   "author": {
     "name": "Deep Switch contributors",

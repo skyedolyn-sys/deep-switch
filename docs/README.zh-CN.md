@@ -6,7 +6,7 @@
 
 ## 下载 / Download
 
-**最新稳定版:** [v0.1.0](../../releases/latest)
+**最新稳定版:** [v0.1.1](../../releases/latest)
 
 **macOS 推荐安装方式（无 Gatekeeper 弹窗，以后 `brew upgrade` 即可升级）:**
 
@@ -16,12 +16,12 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 
 | 平台 | 下载 | 大小 |
 |---|---|---|
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
-| Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
-| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~80 MB |
-| Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
-| Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.dmg`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.dmg) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.zip`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.zip) | ~5 MB |
+| Linux (deb) | [`deep-switch_0.1.1_amd64.deb`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.deb) | ~6 MB |
+| Linux (AppImage) | [`deep-switch_0.1.1_amd64.AppImage`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.AppImage) | ~80 MB |
+| Windows (MSI) | [`deep-switch_0.1.1_x64_en-US.msi`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64_en-US.msi) | ~5 MB |
+| Windows (NSIS .exe) | [`deep-switch_0.1.1_x64-setup.exe`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64-setup.exe) | ~5 MB |
 
 > ⚠️ **手动安装 macOS 版（dmg/zip）：构建使用 ad-hoc 签名、未经苹果公证，** 首次打开可能被系统误报为「已损坏」。别删，文件没坏，任选其一解除限制：
 > 1. **双击 dmg / 解压目录里的【双击我解除限制.command】**（不用开终端敲命令），或
@@ -164,8 +164,8 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 
 **Linux 用哪个文件?**
 
-- **`.deb`**(Debian / Ubuntu):约 4 MB,系统级安装,需要 `sudo`,通过 `apt` 借用系统已有的 WebKitGTK。安装命令:`sudo dpkg -i deep-switch_0.1.0_amd64.deb`(多数桌面文件管理器也可双击安装)。
-- **`.AppImage`**(任意发行版,无需 root):约 80 MB,完全自包含——把 WebKitGTK 一并打包,因此 Arch / Fedora / openSUSE 上无需额外安装系统库即可运行。用法:`chmod +x deep-switch_0.1.0_amd64.AppImage && ./deep-switch_0.1.0_amd64.AppImage`,或直接双击。体积是可移植性的代价——所有依赖都随车携带。
+- **`.deb`**(Debian / Ubuntu):约 4 MB,系统级安装,需要 `sudo`,通过 `apt` 借用系统已有的 WebKitGTK。安装命令:`sudo dpkg -i deep-switch_0.1.1_amd64.deb`(多数桌面文件管理器也可双击安装)。
+- **`.AppImage`**(任意发行版,无需 root):约 80 MB,完全自包含——把 WebKitGTK 一并打包,因此 Arch / Fedora / openSUSE 上无需额外安装系统库即可运行。用法:`chmod +x deep-switch_0.1.1_amd64.AppImage && ./deep-switch_0.1.1_amd64.AppImage`,或直接双击。体积是可移植性的代价——所有依赖都随车携带。
 
 如果更想从源码运行:
 

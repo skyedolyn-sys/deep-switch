@@ -7,7 +7,7 @@
 
 ## Download
 
-**Latest stable:** [v0.1.0](../../releases/latest)
+**Latest stable:** [v0.1.1](../../releases/latest)
 
 **macOS — recommended (no Gatekeeper prompts, auto-updates with `brew upgrade`):**
 
@@ -17,12 +17,12 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 
 | Platform | Download | Size |
 |---|---|---|
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
-| Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
-| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~80 MB |
-| Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
-| Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.dmg`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.dmg) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.zip`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.zip) | ~5 MB |
+| Linux (deb) | [`deep-switch_0.1.1_amd64.deb`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.deb) | ~6 MB |
+| Linux (AppImage) | [`deep-switch_0.1.1_amd64.AppImage`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.AppImage) | ~80 MB |
+| Windows (MSI) | [`deep-switch_0.1.1_x64_en-US.msi`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64_en-US.msi) | ~5 MB |
+| Windows (NSIS .exe) | [`deep-switch_0.1.1_x64-setup.exe`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64-setup.exe) | ~5 MB |
 
 > ⚠️ **Manual macOS install (dmg/zip): the build is ad-hoc signed, not notarized,** so macOS may report the app as "damaged" on first launch. Don't trash it — the download is fine. Either:
 > 1. **Double-click `双击我解除限制.command` inside the dmg / unzipped folder** (no Terminal typing needed), or
@@ -172,8 +172,8 @@ First-party installers are now available — see the [Download](#download) table
 
 **Linux — which file?**
 
-- **`.deb`** (Debian / Ubuntu): ~4 MB, system-wide install, requires `sudo`. Pulls WebKitGTK from your system via `apt`. Install with `sudo dpkg -i deep-switch_0.1.0_amd64.deb` (or double-click in most desktop file managers).
-- **`.AppImage`** (any distro, no root): ~80 MB, fully self-contained — bundles its own WebKitGTK so it runs on Arch / Fedora / openSUSE without installing extra system libraries. Just `chmod +x deep-switch_0.1.0_amd64.AppImage && ./deep-switch_0.1.0_amd64.AppImage`, or double-click. The size is the cost of portability: every dependency travels inside the file.
+- **`.deb`** (Debian / Ubuntu): ~4 MB, system-wide install, requires `sudo`. Pulls WebKitGTK from your system via `apt`. Install with `sudo dpkg -i deep-switch_0.1.1_amd64.deb` (or double-click in most desktop file managers).
+- **`.AppImage`** (any distro, no root): ~80 MB, fully self-contained — bundles its own WebKitGTK so it runs on Arch / Fedora / openSUSE without installing extra system libraries. Just `chmod +x deep-switch_0.1.1_amd64.AppImage && ./deep-switch_0.1.1_amd64.AppImage`, or double-click. The size is the cost of portability: every dependency travels inside the file.
 
 If you'd rather run from source:
 

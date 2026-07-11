@@ -23,13 +23,18 @@
  * Reference: https://developer.apple.com/forums/thread/114456
  */
 import { execSync } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
 const BUNDLE_DIR = join(ROOT, 'src-tauri', 'target', 'release', 'bundle');
 const APP_PATH = join(BUNDLE_DIR, 'macos', 'deep-switch.app');
 const DMG_DIR = join(BUNDLE_DIR, 'dmg');
+
+// Version drives the artifact filenames — read it from tauri.conf.json so a
+// release never ships 0.1.0-named files for a 0.1.1 build again.
+const VERSION = JSON.parse(readFileSync(join(ROOT, 'src-tauri', 'tauri.conf.json'), 'utf8')).version;
+const ARTIFACT_BASE = `deep-switch_${VERSION}_aarch64`;
 
 if (!existsSync(APP_PATH) || !statSync(APP_PATH).isDirectory()) {
   console.error(`✗ app bundle not found at ${APP_PATH}`);
@@ -82,7 +87,7 @@ try {
 }
 
 // Look for the DMG (name depends on Tauri version)
-const DMG_PATH = join(DMG_DIR, 'deep-switch_0.1.0_aarch64.dmg');
+const DMG_PATH = join(DMG_DIR, `${ARTIFACT_BASE}.dmg`);
 if (!existsSync(DMG_PATH)) {
   console.error(`✗ expected dmg not found at ${DMG_PATH} after tauri build`);
   process.exit(1);
@@ -120,7 +125,7 @@ console.log(`✓ .dmg ready: ${sha.trim()}`);
 // zipfile so the Chinese filenames are stored as UTF-8 (the macOS `zip` CLI
 // on this system can't set the UTF-8 flag and garbles them) and the
 // executable bit on the .command script survives.
-const ZIP_NAME = 'deep-switch_0.1.0_aarch64.zip';
+const ZIP_NAME = `${ARTIFACT_BASE}.zip`;
 const ZIP_PATH = join(BUNDLE_DIR, 'macos', ZIP_NAME);
 try {
   execSync(`rm -f "${ZIP_PATH}"`);
@@ -154,4 +159,4 @@ try {
 
 console.log('');
 console.log('Release ready. Upload with:');
-console.log(`  gh release upload v0.1.0 "${DMG_PATH}" "${ZIP_PATH}" --clobber`);
+console.log(`  gh release upload v${VERSION} "${DMG_PATH}" "${ZIP_PATH}" --clobber`);

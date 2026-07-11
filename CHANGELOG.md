@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-07-11
+
+### Added
+
+- **「启动 Deep Code」按钮** — 侧边栏底部一键拉起终端运行 `deepcode`。未安装时自动在终端里可见地执行 `npm install -g @vegamo/deepcode-cli` 后再启动；未检测到 Node.js 时打开平台安装指引。工作目录沿用 settings 中的 workDir（首次使用自动写入）。
+- **Gatekeeper 自救工具内置** — dmg / zip 内附「双击我解除限制.command」脚本与中英安装说明，双击即可执行 `xattr -cr` 解除隔离，无需手敲终端。
+- **macOS 资产补全 zip** — release.yml 增加 ditto 打包步骤，mac 资产从此 dmg + zip 齐全。
+
+### Changed
+
+- **安装方式全面转向 Homebrew 优先** — 五种语言 README 均改为推荐 `brew install --cask skyedolyn-sys/deep-switch/deep-switch`（brew 下载不带隔离属性，`brew upgrade` 即可更新）。
+- **签名脚本版本自感知** — `scripts/sign-mac.mjs` 从 `tauri.conf.json` 读取版本号生成资产文件名，发版无需再改脚本。
+
+### Fixed
+
+- **macOS 构建产物缺 preset** — 同一份 commit 在 GitHub Actions macos-latest runner 上编出的二进制只有 9/12 个服务商预设（缺 SenseNova + 清华两条），本地构建 12/12 正常。根因查明前，mac 产物一律走本地构建 + 签名上传。
+
 ## [0.1.0] - 2026-07-10
 
 ### Changed

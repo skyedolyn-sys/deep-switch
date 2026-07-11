@@ -7,7 +7,7 @@
 
 ## ダウンロード / Download
 
-**最新安定版:** [v0.1.0](../../releases/latest)
+**最新安定版:** [v0.1.1](../../releases/latest)
 
 **macOS の推奨インストール方法（Gatekeeper の警告なし、`brew upgrade` で更新可能）:**
 
@@ -17,12 +17,12 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 
 | プラットフォーム | ダウンロード | サイズ |
 |---|---|---|
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.dmg`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.dmg) | ~5 MB |
-| macOS (Apple Silicon) | [`deep-switch_0.1.0_aarch64.zip`](../../releases/download/v0.1.0/deep-switch_0.1.0_aarch64.zip) | ~5 MB |
-| Linux (deb) | [`deep-switch_0.1.0_amd64.deb`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.deb) | ~6 MB |
-| Linux (AppImage) | [`deep-switch_0.1.0_amd64.AppImage`](../../releases/download/v0.1.0/deep-switch_0.1.0_amd64.AppImage) | ~80 MB |
-| Windows (MSI) | [`deep-switch_0.1.0_x64_en-US.msi`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64_en-US.msi) | ~5 MB |
-| Windows (NSIS .exe) | [`deep-switch_0.1.0_x64-setup.exe`](../../releases/download/v0.1.0/deep-switch_0.1.0_x64-setup.exe) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.dmg`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.dmg) | ~5 MB |
+| macOS (Apple Silicon) | [`deep-switch_0.1.1_aarch64.zip`](../../releases/download/v0.1.1/deep-switch_0.1.1_aarch64.zip) | ~5 MB |
+| Linux (deb) | [`deep-switch_0.1.1_amd64.deb`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.deb) | ~6 MB |
+| Linux (AppImage) | [`deep-switch_0.1.1_amd64.AppImage`](../../releases/download/v0.1.1/deep-switch_0.1.1_amd64.AppImage) | ~80 MB |
+| Windows (MSI) | [`deep-switch_0.1.1_x64_en-US.msi`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64_en-US.msi) | ~5 MB |
+| Windows (NSIS .exe) | [`deep-switch_0.1.1_x64-setup.exe`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64-setup.exe) | ~5 MB |
 
 > ⚠️ **macOS 版の手動インストール（dmg/zip）：ビルドはアドホック署名で公証されていないため、** 初回起動時に「壊れているため開けません」と誤表示されることがあります。削除しないでください — ファイルは正常です。どちらかで解除できます：
 > 1. **dmg / 解凍フォルダ内の【双击我解除限制.command】をダブルクリック**（ターミナル操作不要）、または
@@ -166,8 +166,8 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 
 **Linux — どのファイル?**
 
-- **`.deb`**(Debian / Ubuntu):約 4 MB、システム全体へのインストール、`sudo` が必要。システムの WebKitGTK を `apt` 経由で利用します。`sudo dpkg -i deep-switch_0.1.0_amd64.deb` でインストール(多くのデスクトップファイルマネージャーからダブルクリックでも可)。
-- **`.AppImage`**(任意のディストロ、root 不要):約 80 MB、完全に自己完結 — WebKitGTK も同梱しているため、Arch / Fedora / openSUSE で追加のシステムライブラリなしに動作します。`chmod +x deep-switch_0.1.0_amd64.AppImage && ./deep-switch_0.1.0_amd64.AppImage` で実行、またはダブルクリック。サイズが大きいのはポータビリティの代償で、すべての依存関係がファイル内に入っています。
+- **`.deb`**(Debian / Ubuntu):約 4 MB、システム全体へのインストール、`sudo` が必要。システムの WebKitGTK を `apt` 経由で利用します。`sudo dpkg -i deep-switch_0.1.1_amd64.deb` でインストール(多くのデスクトップファイルマネージャーからダブルクリックでも可)。
+- **`.AppImage`**(任意のディストロ、root 不要):約 80 MB、完全に自己完結 — WebKitGTK も同梱しているため、Arch / Fedora / openSUSE で追加のシステムライブラリなしに動作します。`chmod +x deep-switch_0.1.1_amd64.AppImage && ./deep-switch_0.1.1_amd64.AppImage` で実行、またはダブルクリック。サイズが大きいのはポータビリティの代償で、すべての依存関係がファイル内に入っています。
 
 ソースから動かしたい場合は:
 
