@@ -1504,7 +1504,7 @@ fn open_terminal_with_command(command: &str, work_dir: &str) -> Result<(), Strin
             ("xfce4-terminal", &["-e", &format!("sh -c {}", sh_quote(&inner))]),
             ("xterm", &["-e", "sh", "-c", &inner]),
         ];
-        for (bin, args) in attempts {
+        for &(bin, args) in attempts {
             if let Ok(mut child) = std::process::Command::new(bin).args(args).spawn() {
                 // x-terminal-emulator is a symlink to a real terminal; a spawn
                 // failure means it doesn't exist. Don't wait — it stays open.
