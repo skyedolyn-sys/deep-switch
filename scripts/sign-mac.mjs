@@ -88,18 +88,64 @@ if (!existsSync(DMG_PATH)) {
   process.exit(1);
 }
 
+// Rebuild the DMG with first-run rescue tools inside: Gatekeeper on
+// macOS 15+ mislabels this ad-hoc-signed, non-notarized app as "damaged",
+// so ship a double-clickable `.command` script + bilingual guide next to
+// the app. The user drags the app to Applications, and if blocked, runs
+// the script — no Terminal typing required.
+console.log('▸ Rebuilding DMG with Gatekeeper rescue tools inside');
+const EXTRAS_DIR = join(ROOT, 'scripts', 'dmg-extras');
+const STAGING = join(DMG_DIR, 'staging');
+try {
+  execSync(`rm -rf "${STAGING}" && mkdir -p "${STAGING}"`);
+  execSync(`cp -R "${APP_PATH}" "${STAGING}/"`);
+  execSync(`cp -R "${EXTRAS_DIR}/." "${STAGING}/"`);
+  execSync(`ln -sfn /Applications "${STAGING}/Applications"`);
+  execSync(`rm -f "${DMG_PATH}"`);
+  execSync(
+    `hdiutil create -volname "deep-switch" -srcfolder "${STAGING}" -ov -format UDZO "${DMG_PATH}"`,
+    { stdio: 'inherit' },
+  );
+  execSync(`rm -rf "${STAGING}"`);
+  console.log('✓ DMG rebuilt with rescue tools');
+} catch (err) {
+  console.warn(`⚠ DMG rebuild with extras failed (falling back to plain dmg): ${err.message}`);
+}
+
 const sha = execSync(`shasum -a 256 "${DMG_PATH}"`, { encoding: 'utf8' });
 console.log(`✓ .dmg ready: ${sha.trim()}`);
 
-// Also create a .zip of the signed .app
+// Also create a .zip of the signed .app (with the same rescue tools inside,
+// since zip downloads hit the identical Gatekeeper path). Built with Python's
+// zipfile so the Chinese filenames are stored as UTF-8 (the macOS `zip` CLI
+// on this system can't set the UTF-8 flag and garbles them) and the
+// executable bit on the .command script survives.
 const ZIP_NAME = 'deep-switch_0.1.0_aarch64.zip';
 const ZIP_PATH = join(BUNDLE_DIR, 'macos', ZIP_NAME);
 try {
   execSync(`rm -f "${ZIP_PATH}"`);
-  execSync(
-    `cd "${join(BUNDLE_DIR, 'macos')}" && ditto -c -k --keepParent deep-switch.app "${ZIP_NAME}"`,
-    { stdio: 'inherit' },
-  );
+  const pyScript = join(DMG_DIR, 'make-zip.py');
+  const py = [
+    'import os, zipfile',
+    `staging = ${JSON.stringify(join(BUNDLE_DIR, 'macos'))}`,
+    "app = os.path.join(staging, 'deep-switch.app')",
+    `extras = ${JSON.stringify(EXTRAS_DIR)}`,
+    `out = ${JSON.stringify(ZIP_PATH)}`,
+    "with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:",
+    '    for root, dirs, files in os.walk(app):',
+    '        for f in files:',
+    '            p = os.path.join(root, f)',
+    '            z.write(p, os.path.relpath(p, staging))',
+    '    for f in os.listdir(extras):',
+    '        p = os.path.join(extras, f)',
+    '        if os.path.isfile(p):',
+    '            z.write(p, f)',
+    "print('zip written')",
+    '',
+  ].join('\n');
+  execSync(`cat > "${pyScript}" << 'PYEOF'\n${py}PYEOF`);
+  execSync(`python3 "${pyScript}"`, { stdio: 'inherit' });
+  execSync(`rm -f "${pyScript}"`);
   const zipSha = execSync(`shasum -a 256 "${ZIP_PATH}"`, { encoding: 'utf8' });
   console.log(`✓ .zip ready : ${zipSha.trim()}`);
 } catch (err) {

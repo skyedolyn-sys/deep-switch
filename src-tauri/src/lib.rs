@@ -215,6 +215,10 @@ pub struct AppSettings {
     pub active_provider_id: Option<String>,
     pub deep_code_config_path: String,
     pub preferred_language: String, // "system" | "zh" | "en"
+    /// Directory the "Launch Deep Code" button runs `deepcode` in.
+    /// None until the user launches once or picks a folder explicitly.
+    #[serde(default)]
+    pub work_dir: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -277,6 +281,7 @@ impl Default for StoredData {
                 active_provider_id: None,
                 deep_code_config_path: default_deepcode_config,
                 preferred_language: "system".to_string(),
+                work_dir: None,
             },
         }
     }
@@ -1335,6 +1340,9 @@ fn save_settings(state: tauri::State<AppDb>, settings: serde_json::Value) -> App
             guard.settings.preferred_language = lang.to_string();
         }
     }
+    if let Some(work_dir) = settings.get("workDir") {
+        guard.settings.work_dir = work_dir.as_str().map(|s| s.to_string());
+    }
     state.save_locked(&guard);
     guard.settings.clone()
 }
@@ -1366,6 +1374,245 @@ fn ensure_deepcode_config(state: tauri::State<AppDb>) -> DeepCodePathInfo {
 pub struct DeepCodePathInfo {
     pub path: String,
     pub exists: bool,
+}
+
+// ─── Launch Deep Code CLI ─────────────────────────────────────────────────────
+
+/// npm package that provides the `deepcode` binary.
+const DEEPCODE_NPM_PACKAGE: &str = "@vegamo/deepcode-cli";
+
+/// Structured result of a launch attempt, so the frontend can show precise
+/// feedback ("installing…", "node missing", "launched") instead of guessing.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaunchResult {
+    /// "launched" | "installing" | "node_missing" | "unsupported_platform" | "error"
+    pub status: String,
+    /// Whether `node` was found on PATH / common install locations.
+    pub has_node: bool,
+    /// Whether `deepcode` was found before this attempt.
+    pub has_deepcode: bool,
+    /// Directory deepcode was (or will be) started in.
+    pub work_dir: String,
+    /// Human-readable detail for the frontend (error text or next-step hint).
+    pub message: String,
+}
+
+/// Common absolute install locations for a binary, checked when PATH lookup
+/// fails — GUI apps on macOS inherit a minimal PATH that often misses
+/// Homebrew (/opt/homebrew/bin) and nvm/npm-global directories.
+fn binary_candidates(name: &str) -> Vec<PathBuf> {
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        for dir in [
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/usr/bin",
+            "/bin",
+            "/usr/local/sbin",
+        ] {
+            candidates.push(PathBuf::from(dir).join(name));
+        }
+        if let Some(home) = dirs::home_dir() {
+            candidates.push(home.join(".npm-global").join("bin").join(name));
+            candidates.push(home.join(".local").join("bin").join(name));
+            // nvm-managed node: pick any installed version's bin dir
+            let nvm_dir = home.join(".nvm").join("versions").join("node");
+            if let Ok(entries) = fs::read_dir(&nvm_dir) {
+                let mut versions: Vec<PathBuf> = entries
+                    .filter_map(|e| e.ok())
+                    .map(|e| e.path())
+                    .collect();
+                versions.sort();
+                if let Some(latest) = versions.pop() {
+                    candidates.push(latest.join("bin").join(name));
+                }
+            }
+        }
+    }
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            candidates.push(PathBuf::from(&appdata).join("npm").join(format!("{name}.cmd")));
+            candidates.push(PathBuf::from(&appdata).join("npm").join(format!("{name}.exe")));
+        }
+        candidates.push(PathBuf::from("C:\\Program Files\\nodejs").join(format!("{name}.exe")));
+    }
+    candidates
+}
+
+/// True if `name` resolves on PATH or exists in a common install location.
+fn binary_available(name: &str) -> bool {
+    let on_path = std::env::var_os("PATH").map(|paths| {
+        std::env::split_paths(&paths).any(|dir| {
+            let candidate = dir.join(name);
+            candidate.is_file() || {
+                #[cfg(target_os = "windows")]
+                {
+                    dir.join(format!("{name}.exe")).is_file()
+                        || dir.join(format!("{name}.cmd")).is_file()
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    false
+                }
+            }
+        })
+    });
+    if on_path == Some(true) {
+        return true;
+    }
+    binary_candidates(name).iter().any(|p| p.is_file())
+}
+
+/// Single-quote a string for safe interpolation into a POSIX shell command.
+/// (Only the Linux terminal path uses it; cfg-gated callers make it look dead
+/// on other platforms, hence the allow.)
+#[allow(dead_code)]
+fn sh_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// Open a terminal window running `command` (an interactive shell command
+/// line). Returns Err with a hint when no terminal can be spawned.
+fn open_terminal_with_command(command: &str, work_dir: &str) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        // Terminal.app: open a fresh window and run the command inside it.
+        // osascript string-literal escaping: backslash and double-quote only.
+        let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
+        let script = format!(
+            "tell application \"Terminal\"\nactivate\ndo script \"cd \\\"{}\\\" && {}\"\nend tell",
+            esc(work_dir),
+            esc(command)
+        );
+        return std::process::Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| format!("failed to launch Terminal.app: {e}"));
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let inner = format!("cd {} && {}; exec $SHELL", sh_quote(work_dir), command);
+        let attempts: &[(&str, &[&str])] = &[
+            ("x-terminal-emulator", &["-e", "sh", "-c", &inner]),
+            ("gnome-terminal", &["--", "sh", "-c", &inner]),
+            ("konsole", &["-e", "sh", "-c", &inner]),
+            ("xfce4-terminal", &["-e", &format!("sh -c {}", sh_quote(&inner))]),
+            ("xterm", &["-e", "sh", "-c", &inner]),
+        ];
+        for (bin, args) in attempts {
+            if let Ok(mut child) = std::process::Command::new(bin).args(args).spawn() {
+                // x-terminal-emulator is a symlink to a real terminal; a spawn
+                // failure means it doesn't exist. Don't wait — it stays open.
+                let _ = child.try_wait();
+                return Ok(());
+            }
+        }
+        return Err("no terminal emulator found (tried x-terminal-emulator, gnome-terminal, konsole, xfce4-terminal, xterm)".to_string());
+    }
+    #[cfg(target_os = "windows")]
+    {
+        // cmd /k keeps the window open after the command finishes.
+        let inner = format!("cd /d \"{}\" && {}", work_dir, command);
+        return std::process::Command::new("cmd")
+            .args(["/c", "start", "", "cmd", "/k", &inner])
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| format!("failed to launch cmd: {e}"));
+    }
+    #[allow(unreachable_code)]
+    Err("unsupported platform".to_string())
+}
+
+/// One-click "Launch Deep Code": open a terminal running `deepcode` in the
+/// configured work directory, installing the CLI first when missing.
+///
+/// Dependency chain (most favourable path for the user):
+///   node missing  → open terminal with platform install hint, stop here
+///   deepcode missing → run `npm install -g @vegamo/deepcode-cli && deepcode`
+///   both present  → run `deepcode` directly
+/// Everything executes visibly inside the terminal window — no hidden
+/// privileged operations from the app process itself.
+#[tauri::command]
+fn launch_deepcode(state: tauri::State<AppDb>) -> LaunchResult {
+    // Resolve work dir: saved setting → deepest folder of the Deep Code config
+    // path → home. Always falls back to home so the button never dead-ends.
+    let (work_dir, remembered) = {
+        let guard = state.data.lock().unwrap();
+        let dir = guard
+            .settings
+            .work_dir
+            .clone()
+            .filter(|d| Path::new(d).is_dir())
+            .unwrap_or_else(|| {
+                dirs::home_dir()
+                    .map(|h| h.to_string_lossy().to_string())
+                    .unwrap_or_else(|| ".".to_string())
+            });
+        (dir, guard.settings.work_dir.clone())
+    };
+    // Persist the resolved dir on first use so subsequent launches are stable.
+    if remembered.is_none() {
+        let mut guard = state.data.lock().unwrap();
+        guard.settings.work_dir = Some(work_dir.clone());
+        state.save_locked(&guard);
+    }
+
+    let has_node = binary_available("node");
+    let has_deepcode = binary_available("deepcode");
+
+    if !has_node {
+        let hint = if cfg!(target_os = "macos") {
+            if binary_available("brew") {
+                "brew install node".to_string()
+            } else {
+                "echo 'Node.js not found — install it from https://nodejs.org then relaunch'".to_string()
+            }
+        } else if cfg!(target_os = "windows") {
+            "winget install OpenJS.NodeJS".to_string()
+        } else {
+            "echo 'Node.js not found — install via your package manager (e.g. sudo apt install nodejs npm)'".to_string()
+        };
+        let _ = open_terminal_with_command(&hint, &work_dir);
+        return LaunchResult {
+            status: "node_missing".to_string(),
+            has_node,
+            has_deepcode,
+            work_dir,
+            message: "Node.js is required to install Deep Code CLI".to_string(),
+        };
+    }
+
+    let command = if has_deepcode {
+        "deepcode".to_string()
+    } else {
+        format!("npm install -g {DEEPCODE_NPM_PACKAGE} && deepcode")
+    };
+
+    match open_terminal_with_command(&command, &work_dir) {
+        Ok(()) => LaunchResult {
+            status: if has_deepcode { "launched" } else { "installing" }.to_string(),
+            has_node,
+            has_deepcode,
+            work_dir,
+            message: if has_deepcode {
+                "Deep Code launched in terminal".to_string()
+            } else {
+                format!("Installing {DEEPCODE_NPM_PACKAGE}, then launching")
+            },
+        },
+        Err(e) => LaunchResult {
+            status: "error".to_string(),
+            has_node,
+            has_deepcode,
+            work_dir,
+            message: e,
+        },
+    }
 }
 
 // ─── Entry Point ─────────────────────────────────────────────────────────────
@@ -1417,6 +1664,7 @@ pub fn run() {
             save_settings,
             get_deepcode_path,
             ensure_deepcode_config,
+            launch_deepcode,
             open_in_browser
         ])
         .on_menu_event(|app, event| {

@@ -1,3 +1,12 @@
+export interface LaunchResult {
+  /** "launched" | "installing" | "node_missing" | "unsupported_platform" | "error" */
+  status: string;
+  hasNode: boolean;
+  hasDeepcode: boolean;
+  workDir: string;
+  message: string;
+}
+
 export interface DeepSwitchAPI {
   listProviders: () => Promise<any[]>;
   getProvider: (id: string) => Promise<any>;
@@ -14,6 +23,7 @@ export interface DeepSwitchAPI {
   saveSettings: (settings: any) => Promise<any>;
   getDeepCodeConfigPath: () => Promise<{ path: string; exists: boolean }>;
   ensureDeepCodeConfig: () => Promise<{ path: string; exists: boolean }>;
+  launchDeepCode: () => Promise<LaunchResult>;
   openInBrowser: (url: string) => Promise<void>;
 }
 

@@ -13,7 +13,14 @@
     "configFound": "Found",
     "configMissing": "Missing",
     "createConfigFile": "Create Config File",
-    "detectCurrentConfig": "🔄 Detect Current Deep Code Config"
+    "detectCurrentConfig": "🔄 Detect Current Deep Code Config",
+    "launchDeepCode": "▶ Launch Deep Code",
+    "workDir": "Work Directory"
+  },
+  "launch": {
+    "installing": "⏳ Deep Code CLI not found — installing in terminal now, it will launch automatically when done",
+    "nodeMissing": "⚠️ Node.js not found — opened install instructions in terminal; click again after installing",
+    "error": "❌ Launch failed: {{message}}"
   },
 
   "providerList": {

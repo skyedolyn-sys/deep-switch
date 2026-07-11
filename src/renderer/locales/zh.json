@@ -13,7 +13,14 @@
     "configFound": "已找到",
     "configMissing": "未创建",
     "createConfigFile": "创建配置文件",
-    "detectCurrentConfig": "🔄 检测 Deep Code 当前配置"
+    "detectCurrentConfig": "🔄 检测 Deep Code 当前配置",
+    "launchDeepCode": "▶ 启动 Deep Code",
+    "workDir": "工作目录"
+  },
+  "launch": {
+    "installing": "⏳ 未检测到 Deep Code CLI — 已在终端开始自动安装，完成后将自动启动",
+    "nodeMissing": "⚠️ 未检测到 Node.js — 已在终端打开安装指引，装好后请再点一次",
+    "error": "❌ 启动失败：{{message}}"
   },
 
   "providerList": {

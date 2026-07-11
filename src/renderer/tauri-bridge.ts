@@ -23,6 +23,7 @@ export function setupTauriBridge() {
     saveSettings: (settings: any) => invoke('save_settings', { settings }),
     getDeepCodeConfigPath: () => invoke('get_deepcode_path'),
     ensureDeepCodeConfig: () => invoke('ensure_deepcode_config'),
+    launchDeepCode: () => invoke('launch_deepcode'),
     openInBrowser: (url: string) => invoke('open_in_browser', { url }),
   };
 }

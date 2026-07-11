@@ -1,0 +1,37 @@
+安装说明 / Installation Guide
+═══════════════════════════════════════════════════
+
+【中文】
+
+1. 把 deep-switch.app 拖进右侧的「应用程序」(Applications) 文件夹。
+
+2. 如果首次打开时提示「"deep-switch" 已损坏，无法打开」：
+   → 双击 dmg 里的【双击我解除限制.command】，出现 ✓ 后再打开应用。
+
+   原因：Deep Switch 目前使用 ad-hoc 签名、未做 Apple 公证，macOS 15+
+   会把网上下载的应用误报为"已损坏"。该脚本只是清除系统的隔离标记
+   （等同于在终端执行 xattr -cr /Applications/deep-switch.app）。
+
+3. 更省事的安装方式（推荐）：如果你装了 Homebrew，一行命令搞定，
+   且全程不会遇到任何安全弹窗：
+   brew install --cask skyedolyn-sys/deep-switch/deep-switch
+
+───────────────────────────────────────────────────
+
+[English]
+
+1. Drag deep-switch.app into the Applications folder on the right.
+
+2. If macOS says "deep-switch is damaged and can't be opened" on first
+   launch:
+   → Double-click 【双击我解除限制.command】 in this dmg, wait for ✓,
+     then open the app again.
+
+   Why: Deep Switch is ad-hoc signed but not Apple-notarized, so macOS 15+
+   mislabels internet-downloaded apps as "damaged". The script only clears
+   the quarantine flag (equivalent to running
+   xattr -cr /Applications/deep-switch.app in Terminal).
+
+3. Easiest install (recommended): if you have Homebrew, one command and
+   no security prompts at all:
+   brew install --cask skyedolyn-sys/deep-switch/deep-switch

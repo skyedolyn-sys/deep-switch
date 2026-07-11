@@ -70,6 +70,7 @@ export default function App() {
   const [testResults, setTestResults] = useState<Record<string, { status: string; latencyMs: number; error?: string }>>({});
   const [deepCodePath, setDeepCodePath] = useState<{ path: string; exists: boolean } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [launching, setLaunching] = useState(false);
 
   const api = window.deepSwitch;
 
@@ -157,6 +158,32 @@ export default function App() {
 
   const handleDelete = (id: string) => {
     setDeleteConfirmId(id);
+  };
+
+  /** One-click launch: open a terminal running `deepcode` (auto-installs
+   *  the CLI first when missing). The backend picks the work dir. */
+  const handleLaunchDeepCode = async () => {
+    if (launching) return;
+    setLaunching(true);
+    try {
+      const result = await api.launchDeepCode();
+      switch (result.status) {
+        case 'installing':
+          flash(t('launch.installing'));
+          break;
+        case 'node_missing':
+          flash(t('launch.nodeMissing'));
+          break;
+        case 'error':
+          flash(t('launch.error', { message: result.message }));
+          break;
+        // "launched" → the terminal window speaks for itself; no toast noise.
+      }
+    } catch (err) {
+      flash(t('launch.error', { message: String(err) }));
+    } finally {
+      setLaunching(false);
+    }
   };
 
   const handleDetect = async () => {
@@ -324,6 +351,14 @@ export default function App() {
         </button>
 
         <div className="sidebar-spacer" />
+        <button
+          className="sidebar-launch-btn"
+          onClick={handleLaunchDeepCode}
+          disabled={launching}
+          title={t('sidebar.launchDeepCode')}
+        >
+          <span>{t('sidebar.launchDeepCode')}</span>
+        </button>
         <div className="sidebar-foot">{t('version')}</div>
       </div>
 

@@ -422,5 +422,14 @@ export function setupBrowserMock() {
         exists: true,
       };
     },
+
+    // Browser preview: no terminal to open — report as if deepcode launched.
+    launchDeepCode: async () => ({
+      status: 'launched',
+      hasNode: true,
+      hasDeepcode: true,
+      workDir: '/Users/sky',
+      message: 'Deep Code launched in terminal',
+    }),
   };
 }
