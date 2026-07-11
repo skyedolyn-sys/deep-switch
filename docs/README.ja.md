@@ -25,7 +25,7 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 | Windows (NSIS .exe) | [`deep-switch_0.1.1_x64-setup.exe`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64-setup.exe) | ~5 MB |
 
 > ⚠️ **macOS 版の手動インストール（dmg/zip）：ビルドはアドホック署名で公証されていないため、** 初回起動時に「壊れているため開けません」と誤表示されることがあります。削除しないでください — ファイルは正常です。どちらかで解除できます：
-> 1. **dmg / 解凍フォルダ内の【双击我解除限制.command】をダブルクリック**（ターミナル操作不要）、または
+> 1. **dmg / 解凍フォルダ内の【安装说明 Installation Guide.txt】を開いて 3 ステップをコピペするだけ**（コマンド知識不要）、または
 > 2. ターミナルで一度 `xattr -cr /Applications/deep-switch.app` を実行してから再度起動。
 >
 > Homebrew cask はこの手順を自動で行います — そのため推奨インストール方法です。検証済みの Apple Developer ID が取得でき次第、公証済みリリースに切り替えます。

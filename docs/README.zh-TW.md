@@ -24,7 +24,7 @@ brew install --cask skyedolyn-sys/deep-switch/deep-switch
 | Windows (NSIS .exe) | [`deep-switch_0.1.1_x64-setup.exe`](../../releases/download/v0.1.1/deep-switch_0.1.1_x64-setup.exe) | ~5 MB |
 
 > ⚠️ **手動安裝 macOS 版（dmg/zip）：建構採用 ad-hoc 簽名、未經公證，** 首次開啟可能被系統誤報為「已損毀」。別刪，檔案沒壞，任選其一解除限制：
-> 1. **雙擊 dmg / 解壓目錄裡的【双击我解除限制.command】**（不用開終端機敲指令），或
+> 1. **打開 dmg / 解壓目錄裡的【安装说明 Installation Guide.txt】，照著三步複製貼上即可**（不用懂指令），或
 > 2. 終端機執行一次 `xattr -cr /Applications/deep-switch.app`，再重新開啟。
 >
 > Homebrew cask 會自動完成這一步——所以它是建議的安裝方式。等我們拿到經驗證的 Apple Developer ID 之後，會切換為公證版本。
