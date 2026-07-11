@@ -55,7 +55,7 @@ jobs:
         run: npm run build:renderer
 
       - name: Build Tauri bundle
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         with:
           args: ${{ matrix.args }}
 
