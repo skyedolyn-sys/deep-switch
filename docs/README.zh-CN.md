@@ -277,4 +277,4 @@ deep-switch/
 
 ## 致谢
 
-诚挚感谢以下服务商提供的 API,本应用正是建立在它们之上——**DeepSeek、Moonshot / Kimi、智谱 GLM、MiniMax、字节豆包、SiliconFlow、OpenRouter、OpenAI、Groq、商汤 SenseNova、清华 DeepSeek-R1**——以及 Tauri、React、Vite、Rust、i18next 的维护者们,他们的工作让这个应用的构建变得轻而易举。
+感谢 Tauri、React、Vite、Rust、i18next 的维护者们,他们的工作让这个应用的构建变得轻而易举。

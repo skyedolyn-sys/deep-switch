@@ -285,4 +285,4 @@ If you find a security issue, please open a private advisory instead of a public
 
 ## Acknowledgments
 
-Huge thanks to the providers whose APIs this app routes between — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq, SenseTime SenseNova, Tsinghua DeepSeek-R1** — and to the maintainers of Tauri, React, Vite, Rust and i18next whose work makes this app trivial to build.
+Thanks to the maintainers of Tauri, React, Vite, Rust and i18next whose work makes this app trivial to build.

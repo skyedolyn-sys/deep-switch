@@ -279,4 +279,4 @@ PR 환영 — 주제를 집중하세요.
 
 ## 감사의 말
 
-API를 제공해 주는 공급자들에게 감사드립니다 — **DeepSeek, Moonshot / Kimi, Zhipu GLM, MiniMax, ByteDance Doubao, SiliconFlow, OpenRouter, OpenAI, Groq, SenseTime SenseNova, Tsinghua DeepSeek-R1** — 그리고 Tauri, React, Vite, Rust, i18next의 메인테이너들께. 여러분의 노력 덕분에 이 앱은 쉽게 만들어질 수 있습니다.
+Tauri, React, Vite, Rust, i18next의 메인테이너들에게 감사드립니다. 여러분의 노력 덕분에 이 앱은 쉽게 만들어질 수 있습니다.

@@ -279,4 +279,4 @@ PR 大歓迎 — テーマを絞ってください。
 
 ## 謝辞
 
-API を提供してくれているプロバイダーに感謝——**DeepSeek、Moonshot / Kimi、Zhipu GLM、MiniMax、ByteDance Doubao、SiliconFlow、OpenRouter、OpenAI、Groq、SenseTime SenseNova、Tsinghua DeepSeek-R1**——そして Tauri、React、Vite、Rust、i18next のメンテナたちに。皆さんの仕事があってこそ、このアプリは簡単に作れます。
+Tauri、React、Vite、Rust、i18next のメンテナたちに感謝。皆さんの仕事があってこそ、このアプリは簡単に作れます。
