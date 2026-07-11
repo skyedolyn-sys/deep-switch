@@ -49,6 +49,9 @@ jobs:
 
       - name: Clean stale bundle artifacts
         # Defensive: never let a previous bundle survive into this package.
+        # shell: bash is required — the windows runner defaults to pwsh, where
+        # `rm -rf` is parsed as Remove-Item and fails on the unknown -rf flag.
+        shell: bash
         run: rm -rf src-tauri/target/release/bundle dist
 
       - name: Install system deps (Linux)
