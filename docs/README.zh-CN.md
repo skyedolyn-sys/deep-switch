@@ -56,6 +56,14 @@
 
 ---
 
+## 截图
+
+<p align="center">
+  <img src="./screenshots/main-window.png" alt="Deep Switch 主窗口 — DeepSeek、Kimi、MiniMax、Qwen、OpenAI 并排展示,一键启用" width="880" />
+</p>
+
+---
+
 ## 这是什么?
 
 Deep Switch 是一款小巧的 macOS 菜单栏 / Dock 工具(在 Linux 和 Windows 上则是系统托盘工具),用来改写 `~/.deepcode/settings.json`,让 **Deep Code** CLI 立即切换当前对接的 AI 服务商。一次添加,一键切换——从此告别手改 JSON。
@@ -130,9 +138,15 @@ Deep Switch 把这些全部收拢成一次点击。
 
 ### macOS(推荐)
 
-前往 [Releases](../../releases) 页面下载最新的 `.dmg`,把 **Deep Switch** 拖进「应用程序」文件夹即可。
+**Homebrew(一行命令,自动帮你处理 Gatekeeper 隔离):**
 
-> 因为构建尚未签名,首次从 DMG 启动时可能需要右键 → *打开* 来通过 Gatekeeper 提示。
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
+**或手动安装:** 前往 [Releases](../../releases) 页面下载最新的 `.dmg`,把 **Deep Switch** 拖进「应用程序」文件夹即可。
+
+> 因为构建尚未签名,首次从 DMG 启动时可能需要右键 → *打开* 来通过 Gatekeeper 提示。用 Homebrew cask 安装会自动跑 `xattr -cr`,跳过这一步。
 
 ### Linux 与 Windows
 

@@ -69,7 +69,13 @@ It is a mirror / interchangeable utility *for* Deep Code: it never modifies Deep
 
 ## Screenshots
 
-> Coming soon — see [`docs/screenshots/`](./docs/screenshots) for the placeholder. Drop a PNG of the main window there and it'll be embedded automatically.
+<p align="center">
+  <img src="./docs/screenshots/main-window.png" alt="Deep Switch main window — provider list with DeepSeek, Kimi, MiniMax, Qwen and OpenAI side by side, one-click Enable" width="880" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/main-window-light.png" alt="Deep Switch main window in light theme" width="660" />
+</p>
 
 ---
 
@@ -140,9 +146,15 @@ That's the whole loop.
 
 ### macOS (recommended)
 
-Download the latest `.dmg` from the [Releases](../../releases) page and drag **Deep Switch** into your Applications folder.
+**Homebrew (one command, handles the Gatekeeper quarantine for you):**
 
-> The first time you launch from the DMG, you may need to right-click → *Open* to clear the Gatekeeper prompt, since the build is unsigned.
+```bash
+brew install --cask skyedolyn-sys/deep-switch/deep-switch
+```
+
+**Or manual install:** download the latest `.dmg` from the [Releases](../../releases) page and drag **Deep Switch** into your Applications folder.
+
+> The first time you launch from the DMG, you may need to right-click → *Open* to clear the Gatekeeper prompt, since the build is unsigned. The Homebrew cask runs `xattr -cr` automatically so you skip this step.
 
 ### Linux & Windows
 
