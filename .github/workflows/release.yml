@@ -39,20 +39,14 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Rust cache (isolated per commit)
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          # Keyed to the exact commit so a cache from an older source tree can
-          # never be reused for a newer tag build.
-          shared-key: ${{ github.sha }}
-
-      - name: Clean stale bundle artifacts
-        # Defensive: never let a previous bundle survive into this package.
-        # shell: bash is required — the windows runner defaults to pwsh, where
-        # `rm -rf` is parsed as Remove-Item and fails on the unknown -rf flag.
+      - name: Clean all Rust + renderer build artifacts
+        # Guarantee a from-scratch build. We previously shipped a stale binary
+        # because a restored rust-cache target/ made cargo treat the bin crate as
+        # up-to-date and skip recompiling after the source changed. Nuking the
+        # whole target dir is the only reliable way to force a rebuild. The CI
+        # time cost (~8 min) is worth a correct release.
         shell: bash
-        run: rm -rf src-tauri/target/release/bundle dist
+        run: rm -rf src-tauri/target dist
 
       - name: Install system deps (Linux)
         if: matrix.platform == 'ubuntu-22.04'
